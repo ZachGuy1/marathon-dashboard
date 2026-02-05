@@ -471,21 +471,33 @@ setTimeout(() => {
     const originalSaveRuns = saveRuns;
     const originalLoadSavedRuns = loadSavedRuns;
     
-    window.saveEdits = async function(key, edits) {
-        setSyncStatus('syncing');
+   // Debounce timer to prevent sync on every keystroke
+let saveTimer = null;
+
+window.saveEdits = async function(key, edits) {
+    // Save to localStorage immediately (no lag)
+    originalSaveEdits(key, edits);
+    
+    // Show syncing status
+    setSyncStatus('syncing');
+    
+    // Clear previous timer
+    if (saveTimer) clearTimeout(saveTimer);
+    
+    // Wait 3 seconds after last keystroke before syncing to Firebase
+    saveTimer = setTimeout(async () => {
         try {
             await db.collection('marathon-data').doc('overrides').set({
                 data: edits || {},
                 updatedAt: new Date()
             });
-            originalSaveEdits(key, edits);
             setSyncStatus('synced');
         } catch(e) {
             console.error('Firebase save error:', e);
             setSyncStatus('offline');
-            originalSaveEdits(key, edits);
         }
-    };
+    }, 3000); // Wait 3 seconds after typing stops
+};
     
     window.loadEdits = async function(key) {
         try {
@@ -500,21 +512,27 @@ setTimeout(() => {
         }
     };
     
-    window.saveRuns = async function(userRuns) {
-        setSyncStatus('syncing');
+ let runsTimer = null;
+
+window.saveRuns = async function(userRuns) {
+    originalSaveRuns(userRuns);
+    setSyncStatus('syncing');
+    
+    if (runsTimer) clearTimeout(runsTimer);
+    
+    runsTimer = setTimeout(async () => {
         try {
             await db.collection('marathon-data').doc('user-runs').set({
                 runs: userRuns || [],
                 updatedAt: new Date()
             });
-            originalSaveRuns(userRuns);
             setSyncStatus('synced');
         } catch(e) {
             console.error('Firebase save error:', e);
             setSyncStatus('offline');
-            originalSaveRuns(userRuns);
         }
-    };
+    }, 3000); // Wait 3 seconds
+};
     
     window.loadSavedRuns = async function() {
         try {
