@@ -2,7 +2,17 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+ <!-- Viewport with iOS optimizations -->
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+<!-- iOS PWA Configuration -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Marathon 2026">
+<meta name="theme-color" content="#667eea">
+
+<!-- iOS App Icon (temporary placeholder) -->
+<link rel="apple-touch-icon" href="https://via.placeholder.com/180x180/667eea/ffffff?text=M">
     <title>Philadelphia Marathon Training Dashboard</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
     <style>
@@ -416,7 +426,21 @@
 #planTable td[id^="planWeekTotal_"]{
   background: rgba(51, 65, 85, 0.04) !important;
 }
+/* iOS-specific improvements */
+body {
+    -webkit-text-size-adjust: 100%;
+    overscroll-behavior-y: none;
+}
 
+/* Better touch targets for iOS */
+button, .pill-btn, input[type="submit"] {
+    min-height: 44px;
+}
+
+/* Smoother scrolling */
+* {
+    -webkit-overflow-scrolling: touch;
+}
 </style>
 </head>
 <body>
