@@ -1,0 +1,3147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Philadelphia Marathon Training Dashboard</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 40px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+        
+        .header p {
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            padding: 30px;
+            background: #f8f9fa;
+        }
+        
+        .stat-card {
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            border-left: 4px solid #667eea;
+        }
+        
+        .stat-card h3 {
+            color: #666;
+            font-size: 0.9em;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 10px;
+        }
+        
+        .stat-card .value {
+            font-size: 2em;
+            font-weight: 700;
+            color: #333;
+        }
+        
+        .stat-card .subvalue {
+            font-size: 0.9em;
+            color: #999;
+            margin-top: 5px;
+        }
+        
+        .chart-section {
+            padding: 30px;
+        }
+        
+        .chart-title {
+            font-size: 1.5em;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 20px;
+        }
+        
+        .chart-container {
+            position: relative;
+            height: 400px;
+            margin-bottom: 30px;
+        }
+        
+        .chart-container-small {
+            position: relative;
+            height: 300px;
+        }
+        
+        .charts-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 30px;
+            padding: 30px;
+            background: #f8f9fa;
+        }
+        
+        .mini-chart {
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+.week-card {
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+.workout-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 10px;
+        }
+
+/* Upcoming Schedule: force a 7-day row on larger screens */
+.workout-grid.weekly{
+    grid-template-columns: repeat(7, minmax(110px, 1fr));
+}
+@media (max-width: 900px){
+    .workout-grid.weekly{ grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); }
+}
+.week-card-header{
+    display:flex;
+    align-items:flex-end;
+    justify-content:space-between;
+    gap:12px;
+    padding-bottom:8px;
+    border-bottom:1px solid #eee;
+    margin-bottom:14px;
+}
+.week-card-header .left{
+    font-size: 1.4em;
+    font-weight: 700;
+}
+.week-card-header .right{
+    font-size: 1.1em;
+    font-weight: 700;
+    color: #667eea;
+}
+.workout-item .dow{
+    font-weight:700;
+    letter-spacing:0.02em;
+    color:#444;
+    margin-bottom:6px;
+}
+.workout-item .detail{
+    font-size: 1.05em;
+    color:#111;
+}
+        
+        .workout-item {
+            padding: 10px;
+            border-radius: 8px;
+            background: #f8f9fa;
+            border-left: 3px solid #667eea;
+        }
+        
+        .workout-item.tempo { border-left-color: #f6ad55; background: #fff5e6; }
+        .workout-item.long { border-left-color: #fc8181; background: #ffe6e6; }
+        .workout-item.off { border-left-color: #999; background: #f5f5f5; }
+
+        .workout-item.easy { border-left-color: #4299e1; background: #e6f2ff; }
+        .workout-item.recovery { border-left-color: #68d391; background: #e9f9ef; }
+        .workout-item.strength { border-left-color: #9f7aea; background: #f2ecff; }
+        .workout-item.cross { border-left-color: #38b2ac; background: #e6fffb; }
+        
+        .workout-day {
+            font-weight: 600;
+            font-size: 0.85em;
+            color: #666;
+            margin-bottom: 5px;
+        }
+        
+        .workout-detail {
+            font-size: 0.9em;
+            color: #333;
+        }
+        
+        .runs-list {
+            padding: 30px;
+        }
+        
+        .run-item {
+            background: white;
+            padding: 15px 20px;
+            margin-bottom: 10px;
+            border-radius: 10px;
+            border-left: 4px solid #667eea;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .run-item.tempo { border-left-color: #f6ad55; }
+        .run-item.long { border-left-color: #fc8181; }
+        .run-item.recovery { border-left-color: #68d391; }
+        
+        .run-date {
+            font-weight: 600;
+            color: #333;
+        }
+        
+        .run-stats {
+            display: flex;
+            gap: 20px;
+            color: #666;
+            font-size: 0.9em;
+        }
+    
+        .pill-btn{
+            background: #fff;
+            border: 1px solid #ddd;
+            padding: 6px 10px;
+            border-radius: 999px;
+            cursor: pointer;
+            font-size: 0.85em;
+        }
+        .pill-btn:hover{ border-color:#c00; }
+
+        /* Freeze header (sticky) for plan table */
+        table thead th {
+            position: sticky;
+            top: 0;
+            z-index: 5;
+            background: #fafafa;
+        }
+
+
+        .override-indicator{
+            display:inline-block;
+            width:6px;
+            height:6px;
+            border-radius:50%;
+            background:#3182ce;
+            margin-right:6px;
+            vertical-align:middle;
+            opacity:0.75;
+        }
+
+        /* Plan table navigation + sticky header */
+        .plan-table-controls{
+            display:flex;
+            justify-content:space-between;
+            align-items:center;
+            gap:12px;
+            flex-wrap:wrap;
+            padding:10px 12px;
+            margin:10px 0 10px 0;
+            background:#f8f8fb;
+            border:1px solid #eee;
+            border-radius:10px;
+            font-size:12px;
+        }
+        .plan-table-controls label{
+            display:inline-flex;
+            align-items:center;
+            gap:6px;
+            color:#333;
+        }
+        .plan-table-controls input[type="number"],
+        .plan-table-controls input[type="date"]{
+            padding:6px 8px;
+            border:1px solid #ddd;
+            border-radius:8px;
+            font-size:12px;
+            background:#fff;
+            min-width:120px;
+        }
+        .plan-table-controls .smallBtn{
+            padding:6px 10px;
+            border:1px solid #ddd;
+            border-radius:8px;
+            background:#fff;
+            cursor:pointer;
+            font-size:12px;
+        }
+        .plan-table-controls .smallBtn.secondary{
+            background:#f3f3f7;
+        }
+        .checkboxLabel{
+            display:inline-flex;
+            align-items:center;
+            gap:8px;
+            user-select:none;
+            color:#333;
+        }
+        #planTable thead th{
+            position: sticky;
+            top: 0;
+            z-index: 3;
+            background: #f8f8f8;
+        }
+        #planTable thead tr{
+            position: sticky;
+            top: 0;
+            z-index: 2;
+        }
+        .planRowHighlight{
+            outline: 2px solid rgba(102,126,234,0.55);
+            outline-offset: -2px;
+        }
+
+
+/* ============================
+   V3: Plan Table readability
+   - vertical group dividers
+   - zebra striping
+   - week-start emphasis
+   ============================ */
+
+#planTable{
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+/* Zebra striping (tbody only) */
+#planTable tbody tr:nth-child(odd){ background:#ffffff; }
+#planTable tbody tr:nth-child(even){ background:#fafafa; }
+
+/* Row hover helps scanning */
+#planTable tbody tr:hover{ background:#f3f6ff; }
+
+/* Light row separators */
+#planTable th, #planTable td{ border-bottom: 1px solid #eee; }
+
+/* Vertical dividers between major column groups:
+   [Week|Planned week miles] | [Day/Date + Planned] | [Actual] | [Weather/Notes]
+   Columns: 2, 4, 8 get a right border.
+*/
+#planTable th:nth-child(2), #planTable td:nth-child(2),
+#planTable th:nth-child(4), #planTable td:nth-child(4),
+#planTable th:nth-child(8), #planTable td:nth-child(8){
+  border-right: 1px solid #e5e7eb;
+}
+
+/* Week-start emphasis */
+#planTable tbody tr.weekStart td{ border-top: 2px solid #e5e7eb; }
+
+/* Week number anchor */
+#planTable td.weekCell{
+  font-weight: 700;
+  color: #111827;
+}
+
+
+/* ============================
+   V4: Emphasize Week & Planned Miles (Week)
+   ============================ */
+
+/* Week number column */
+#planTable td.weekCell{
+  color: #0f766e; /* deep teal */
+  font-weight: 700;
+}
+
+/* Planned Miles (Week) column (2nd column) */
+#planTable tbody td:nth-child(2){
+  color: #14b8a6; /* soft teal */
+  font-weight: 600;
+}
+
+
+/* ============================
+   V7: Slate / Steel color anchors (Option A)
+   ============================ */
+
+/* Week number column (includes <strong>) */
+#planTable td.weekCell,
+#planTable td.weekCell strong{
+  color: #1e293b !important; /* slate-700 */
+}
+
+/* Planned Miles (Week) cells have ids like planWeekTotal_17 */
+#planTable td[id^="planWeekTotal_"]{
+  color: #334155 !important; /* slate-600 */
+  font-weight: 600;
+}
+
+
+/* ============================
+   V11: Make Week + Planned Week Miles colors unmistakable (and override-safe)
+   ============================ */
+
+/* Week column header + cells */
+#planTable thead th:nth-child(1),
+#planTable td.weekCell,
+#planTable td.weekCell strong{
+  color: #1e293b !important; /* dark navy */
+}
+
+/* Planned Miles (Week) header + cells */
+#planTable thead th:nth-child(2),
+#planTable td[id^="planWeekTotal_"]{
+  color: #334155 !important; /* lighter navy */
+}
+
+/* Optional subtle cue so it's visibly different even if a theme overrides text color */
+#planTable td[id^="planWeekTotal_"]{
+  background: rgba(51, 65, 85, 0.04) !important;
+}
+
+</style>
+</head>
+<body>
+
+<!-- FIREBASE INTEGRATION START -->
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+
+<script>
+const firebaseConfig = {
+  apiKey: "AIzaSyCpeIYhX50sDtDBCez9aF4RENtVlpuDZRc",
+  authDomain: "marathon-dashboard-2026.firebaseapp.com",
+  projectId: "marathon-dashboard-2026",
+  storageBucket: "marathon-dashboard-2026.firebasestorage.app",
+  messagingSenderId: "131406298279",
+  appId: "1:131406298279:web:265e0a70faca6232f6ef82"
+};
+
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+
+let syncStatusEl = null;
+function setSyncStatus(status) {
+    if (!syncStatusEl) {
+        syncStatusEl = document.createElement('div');
+        syncStatusEl.id = 'syncStatus';
+        syncStatusEl.style.cssText = 'position:fixed;top:20px;right:20px;padding:8px 16px;border-radius:20px;background:white;box-shadow:0 2px 8px rgba(0,0,0,0.15);font-size:13px;z-index:1000;';
+        document.body.appendChild(syncStatusEl);
+    }
+    
+    if (status === 'syncing') {
+        syncStatusEl.textContent = '● Syncing...';
+        syncStatusEl.style.background = '#fff3cd';
+        syncStatusEl.style.border = '1px solid #ffc107';
+        syncStatusEl.style.color = '#856404';
+    } else if (status === 'synced') {
+        syncStatusEl.textContent = '● Synced';
+        syncStatusEl.style.background = '#d4edda';
+        syncStatusEl.style.border = '1px solid #28a745';
+        syncStatusEl.style.color = '#155724';
+    } else if (status === 'offline') {
+        syncStatusEl.textContent = '● Offline';
+        syncStatusEl.style.background = '#f8d7da';
+        syncStatusEl.style.border = '1px solid #dc3545';
+        syncStatusEl.style.color = '#721c24';
+    }
+}
+
+setTimeout(() => {
+    const originalSaveEdits = saveEdits;
+    const originalLoadEdits = loadEdits;
+    const originalSaveRuns = saveRuns;
+    const originalLoadSavedRuns = loadSavedRuns;
+    
+    window.saveEdits = async function(key, edits) {
+        setSyncStatus('syncing');
+        try {
+            await db.collection('marathon-data').doc('overrides').set({
+                data: edits || {},
+                updatedAt: new Date()
+            });
+            originalSaveEdits(key, edits);
+            setSyncStatus('synced');
+        } catch(e) {
+            console.error('Firebase save error:', e);
+            setSyncStatus('offline');
+            originalSaveEdits(key, edits);
+        }
+    };
+    
+    window.loadEdits = async function(key) {
+        try {
+            const doc = await db.collection('marathon-data').doc('overrides').get();
+            if (doc.exists) {
+                return doc.data().data || {};
+            }
+            return originalLoadEdits(key);
+        } catch(e) {
+            console.error('Firebase load error:', e);
+            return originalLoadEdits(key);
+        }
+    };
+    
+    window.saveRuns = async function(userRuns) {
+        setSyncStatus('syncing');
+        try {
+            await db.collection('marathon-data').doc('user-runs').set({
+                runs: userRuns || [],
+                updatedAt: new Date()
+            });
+            originalSaveRuns(userRuns);
+            setSyncStatus('synced');
+        } catch(e) {
+            console.error('Firebase save error:', e);
+            setSyncStatus('offline');
+            originalSaveRuns(userRuns);
+        }
+    };
+    
+    window.loadSavedRuns = async function() {
+        try {
+            const doc = await db.collection('marathon-data').doc('user-runs').get();
+            if (doc.exists) {
+                return doc.data().runs || [];
+            }
+            return originalLoadSavedRuns();
+        } catch(e) {
+            console.error('Firebase load error:', e);
+            return originalLoadSavedRuns();
+        }
+    };
+    
+    db.collection('marathon-data').doc('overrides').onSnapshot((doc) => {
+        if (doc.exists && window.OVERRIDES) {
+            const newData = doc.data().data || {};
+            if (JSON.stringify(newData) !== JSON.stringify(window.OVERRIDES)) {
+                window.OVERRIDES = newData;
+                if (window.rebuildLegacyEditsFromEffective) window.rebuildLegacyEditsFromEffective();
+                if (window.updatePlannedSeriesFromEdits) window.updatePlannedSeriesFromEdits();
+                if (window.updateTopStats) window.updateTopStats();
+                if (typeof renderPlanTable === 'function') renderPlanTable();
+            }
+        }
+    });
+    
+    db.collection('marathon-data').doc('user-runs').onSnapshot((doc) => {
+        if (doc.exists) {
+            const newRuns = doc.data().runs || [];
+            if (window.refreshRunsFromEffectiveDays && window.recomputeAll) {
+                window.userRuns = newRuns;
+                window.refreshRunsFromEffectiveDays();
+                window.recomputeAll();
+            }
+        }
+    });
+    
+    (async function initFirebase() {
+        setSyncStatus('syncing');
+        try {
+            const overridesDoc = await db.collection('marathon-data').doc('overrides').get();
+            if (overridesDoc.exists) {
+                window.OVERRIDES = overridesDoc.data().data || {};
+                if (window.rebuildLegacyEditsFromEffective) window.rebuildLegacyEditsFromEffective();
+                if (typeof renderPlanTable === 'function') renderPlanTable();
+            }
+            
+            const runsDoc = await db.collection('marathon-data').doc('user-runs').get();
+            if (runsDoc.exists && window.refreshRunsFromEffectiveDays) {
+                window.userRuns = runsDoc.data().runs || [];
+                window.refreshRunsFromEffectiveDays();
+                if (window.recomputeAll) window.recomputeAll();
+            }
+            
+            setSyncStatus('synced');
+        } catch(e) {
+            console.error('Firebase init error:', e);
+            setSyncStatus('offline');
+        }
+    })();
+    
+}, 1000);
+</script>
+<!-- FIREBASE INTEGRATION END -->
+
+    <div class="container">
+        <div id="errorBanner" style="display:none; margin: 18px 0; padding: 14px 16px; border-radius: 12px; background: #fff3f3; border: 1px solid #ffd1d1; color:#7a1f1f;">
+            <strong>Dashboard error:</strong> <span id="errorBannerText"></span>
+            <div style="margin-top:6px; font-size:12px; color:#7a1f1f; opacity:0.9;">If you see this, the page’s script hit an error and stopped. Copy the message and send it to me.</div>
+        </div>
+
+        <div class="header">
+            <h1>Philadelphia Marathon 2026</h1>
+            <p>Race Day: November 22, 2026 | Goal: 3:55:00 (9:00/mile)</p>
+        </div>
+
+        <div id="asOfBar" style="margin: 10px 0 18px; padding: 10px 12px; border-radius: 12px; background: #fff; border: 1px solid #e5e5e5; display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+            <div style="font-weight: 700; color: #333;">As-of Date (optional):</div>
+            <input id="asOfDate" type="date" style="padding: 8px 10px; border-radius: 10px; border: 1px solid #ddd;">
+            <div style="font-size: 0.85em; color: #666;"></div>
+        </div>
+
+        <div id="tabBar" style="margin: 0 0 18px; padding: 10px 12px; border-radius: 12px; background: #fff; border: 1px solid #e5e5e5; display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+            <button class="pill-btn" id="tabDashboard" type="button" style="border-color:#667eea; font-weight:700;">Dashboard</button>
+            <button class="pill-btn" id="tabPlan" type="button">Plan Table</button>
+            <button class="pill-btn" id="tabUpcomingSchedule" type="button">Upcoming Schedule</button>
+</div>
+
+        <div id="dashboardTab">
+        <div class="stats-grid">
+            <div class="stat-card">
+                <h3>Days Until Race</h3>
+                <div class="value" id="countdown">297</div>
+            </div>
+            <div class="stat-card">
+                <h3>Current Week</h3>
+                <div class="value" id="currentWeekVal">Week 3</div>
+                <div class="subvalue">of 47</div>
+            </div>
+            <div class="stat-card">
+                <h3>This Week</h3>
+                <div class="value" id="thisWeekMilesVal">12.0</div>
+                <div class="subvalue" id="thisWeekTargetVal">Target: 24–26 mi</div>
+            </div>
+            <div class="stat-card">
+                <h3>Total Miles</h3>
+                <div class="value" id="totalMilesVal">54.5</div>
+                <div class="subvalue">Actual to date</div>
+            </div>
+            <div class="stat-card">
+                <h3>Last 7 Days</h3>
+                <div class="value" id="last7MilesVal">0.00</div>
+                <div class="subvalue" id="last7DetailVal">Runs: 0 • Avg pace: —</div>
+            </div>
+        </div>
+        
+        <div class="chart-section">
+            <h2 class="chart-title">Training Plan and Actual Runs</h2>
+            <div class="chart-container">
+                <canvas id="mainChart"></canvas>
+            </div>
+        </div>
+
+<div class="chart-section" style="padding-top: 0;">
+            <div class="week-card" style="margin-bottom: 0;">
+                <div class="week-header" style="border-bottom: none; padding-bottom: 0; margin-bottom: 10px;">
+                    <div class="week-title" style="font-size: 1.05em;">Date Range Filter (affects Run Type, Pace, HR charts)</div>
+                    <div class="week-mileage" id="rangeLabel" style="font-size: 1em;">All runs</div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 160px 1fr 1fr; gap: 12px; align-items: end;">
+                    <div>
+                        <div style="font-size: 0.85em; color: #666; margin-bottom: 6px;">Mode</div>
+                        <select id="rangeMode" style="width: 100%; padding: 8px; border-radius: 8px; border: 1px solid #ddd;">
+                            <option value="custom" selected>Custom</option>
+                            <option value="week">Week</option>
+                            <option value="month">Month</option>
+                        </select>
+                    </div>
+                    <div>
+                        <div style="font-size: 0.85em; color: #666; margin-bottom: 6px;">Start</div>
+                        <input id="rangeStartDate" type="date" style="width: 100%; padding: 8px; border-radius: 8px; border: 1px solid #ddd;">
+                    </div>
+                    <div>
+                        <div style="font-size: 0.85em; color: #666; margin-bottom: 6px;">End</div>
+                        <input id="rangeEndDate" type="date" style="width: 100%; padding: 8px; border-radius: 8px; border: 1px solid #ddd;">
+                    </div>
+                </div>
+
+                <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px;">
+                    <button class="pill-btn" id="quickAll">All</button>
+                    <button class="pill-btn" id="quick7">Last 7 days</button>
+                    <button class="pill-btn" id="quick14">Last 14 days</button>
+                    <button class="pill-btn" id="quickThisMonth">This month</button>
+                </div>
+
+                <div style="margin-top: 12px;">
+                    <div style="font-size: 0.85em; color: #666; margin-bottom: 6px;">Run Types (filter all charts)</div>
+                    <div style="display:flex; gap: 8px; flex-wrap: wrap;">
+                        <button class="pill-btn" type="button" data-run-type="easy" id="typeEasy">Easy</button>
+                        <button class="pill-btn" type="button" data-run-type="tempo" id="typeTempo">Tempo</button>
+                        <button class="pill-btn" type="button" data-run-type="long" id="typeLong">Long</button>
+                        <button class="pill-btn" type="button" data-run-type="recovery" id="typeRecovery">Recovery</button>
+                        <button class="pill-btn" type="button" data-run-type="interval" id="typeInterval">Interval</button>
+                        <button class="pill-btn" type="button" data-run-type="race" id="typeRace">Race</button>
+                    </div>
+                    <div style="font-size: 0.8em; color:#888; margin-top: 6px;">Tip: click to toggle. If all are off, it will auto-reset to All.</div>
+                </div>
+
+                <div style="font-size: 0.85em; color: #666; margin-top: 10px;">
+                    Tip: use the date pickers (calendar) for any range, or switch to Week/Month mode to snap the selection.
+                </div>
+            </div>
+        
+
+                </div>
+
+        <div class="charts-row">
+            <div class="mini-chart">
+                <h3 class="chart-title" style="font-size: 1.2em;">Run Type Distribution</h3>
+                <div class="chart-container-small">
+                    <canvas id="pieChart"></canvas>
+                </div>
+            </div>
+            <div class="mini-chart">
+                <h3 class="chart-title" style="font-size: 1.2em;">Pace Progression</h3>
+                <div class="chart-container-small">
+                    <canvas id="paceChart"></canvas>
+                </div>
+            </div>
+        </div>
+        
+        <div class="chart-section">
+            <h2 class="chart-title">Heart Rate vs Pace Efficiency</h2>
+            <div class="chart-container">
+                <canvas id="hrChart"></canvas>
+            </div>
+        </div>
+        
+        
+        
+
+
+        
+        </div>
+
+        <div id="planTab" style="display:none;">
+        <div class="chart-section" id="planTableSection" style="padding-top: 0;">
+            <h2 class="chart-title">Planned Workouts Table (editable)</h2>
+            <div class="week-card" style="margin-bottom: 0;">
+                <div style="font-size: 0.9em; color:#666; margin-bottom: 12px;">
+                    
+                
+                    <div style="display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap;">
+                        <div style="font-weight:600; color:#444;">Portable backups (recommended):</div>
+                        <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+                            <button class="pill-btn" id="exportOverridesBtn" type="button">Export OVERRIDES JSON</button>
+                            <button class="pill-btn" id="importOverridesBtn" type="button">Import OVERRIDES JSON</button>
+                            <input id="importOverridesFile" type="file" accept="application/json,.json" style="display:none;">
+                            <span id="overridesIoStatus" style="font-size:12px; color:#666;"></span>
+                        </div>
+                    </div>
+                    <div style="font-size:12px; color:#888; margin-top:6px;">
+                        Tip: export after edits so you can import on another browser/computer (localStorage doesn’t transfer automatically).
+                    
+</div>
+                <div class="plan-table-controls">
+                    <div class="plan-table-controls-left">
+                        <label>Jump to week
+                            <input id="planJumpWeek" type="number" min="1" max="47" step="1" placeholder="1–47">
+                        </label>
+                        <button id="planJumpWeekBtn" class="smallBtn">Go</button>
+
+                        <label style="margin-left:10px;">Jump to date
+                            <input id="planJumpDate" type="date">
+                        </label>
+                        <button id="planJumpDateBtn" class="smallBtn">Go</button>
+                    </div>
+
+                    <div class="plan-table-controls-right">
+                        <button id="planClearNavBtn" class="smallBtn secondary">Clear</button>
+                    </div>
+                </div>
+
+                <div id="planTableWrap" style="overflow-x:auto; overflow-y:auto; max-height:70vh; border:1px solid #eee; border-radius:10px;">
+
+                    <table id="planTable" style="width:100%; border-collapse: collapse; min-width: 760px; font-size:12px;">
+                        <thead>
+                            <tr style="text-align:left; background:#f8f9fa;">
+                                <th style="padding:6px 8px; border-bottom:1px solid #eee;">Week</th>
+                                
+                                <th style="padding:6px 8px; border-bottom:1px solid #eee;">Planned Miles (Week)</th>
+                                <th style="padding:6px 8px; border-bottom:1px solid #eee;">Day / Date</th>
+                                <th style="padding:6px 8px; border-bottom:1px solid #eee;">Planned Type</th>
+                                <th style="padding:6px 8px; border-bottom:1px solid #eee;">Planned Miles (Day)</th>
+                                <th style="padding:6px 8px; border-bottom:1px solid #eee;">Actual Type</th>
+                                <th style="padding:6px 8px; border-bottom:1px solid #eee;">Actual Miles</th>
+                                <th style="padding:6px 8px; border-bottom:1px solid #eee;">Actual Pace</th>
+                                <th style="padding:6px 8px; border-bottom:1px solid #eee;">Avg. HR</th>
+                                <th style="padding:6px 8px; border-bottom:1px solid #eee;">Weather</th>
+                                <th style="padding:6px 8px; border-bottom:1px solid #eee;">Notes</th>
+</tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+</div>
+
+        <div id="runsTabSection">
+
+        <div class="runs-list">
+
+            <h2 class="chart-title">Recent Runs</h2>
+            <div class="week-card" style="margin-bottom: 20px;">
+                <div class="week-header">
+                    <div class="week-title">Add a Run (updates charts automatically)</div>
+                    <div class="week-mileage" style="font-size: 1em;">Saved locally in your browser</div>
+                </div>
+                <form id="addRunForm" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;align-items:end;">
+                    <div><div style="font-size:0.85em;color:#666;margin-bottom:6px;">Date</div><input id="runDate" type="date" required style="width:100%;padding:10px;border-radius:10px;border:1px solid #ddd;"></div>
+                    <div><div style="font-size:0.85em;color:#666;margin-bottom:6px;">Type</div>
+                        <select id="runType" required style="width:100%;padding:10px;border-radius:10px;border:1px solid #ddd;">
+                            <option value="easy">Easy</option>
+                            <option value="recovery">Recovery</option>
+                            <option value="tempo">Tempo</option>
+                            <option value="long">Long</option>
+                        </select>
+                    </div>
+                    <div><div style="font-size:0.85em;color:#666;margin-bottom:6px;">Miles</div><input id="runMiles" type="number" step="0.01" min="0" required style="width:100%;padding:10px;border-radius:10px;border:1px solid #ddd;"></div>
+                    <div><div style="font-size:0.85em;color:#666;margin-bottom:6px;">Pace (min/mile)</div><input id="runPace" type="text" placeholder="9:30" required style="width:100%;padding:10px;border-radius:10px;border:1px solid #ddd;"></div>
+                    <div><div style="font-size:0.85em;color:#666;margin-bottom:6px;">Avg HR</div><input id="runHr" type="number" step="1" min="0" style="width:100%;padding:10px;border-radius:10px;border:1px solid #ddd;"></div>
+                    <div><div style="font-size:0.85em;color:#666;margin-bottom:6px;">Temp (optional)</div><input id="runTemp" type="text" placeholder="35°F" style="width:100%;padding:10px;border-radius:10px;border:1px solid #ddd;"></div>
+                    <div><button type="submit" style="width:100%;padding:12px 14px;border:none;border-radius:12px;background:#667eea;color:white;font-weight:700;cursor:pointer;">Add Run</button></div>
+                </form>
+                <div style="margin-top: 10px; display:flex; gap: 12px; flex-wrap: wrap; align-items:center;">
+                    <button id="clearRuns" type="button" style="padding:6px 8px;border:1px solid #ddd;border-radius:10px;background:white;cursor:pointer;">Clear saved runs</button>
+                    <button id="exportRunsCsv" type="button" style="padding:6px 8px;border:1px solid #ddd;border-radius:10px;background:white;cursor:pointer;">Export runs (CSV)</button>
+                    <button id="exportWeeklyCsv" type="button" style="padding:6px 8px;border:1px solid #ddd;border-radius:10px;background:white;cursor:pointer;">Export Entire Plan</button>
+                    <div style="font-size:0.85em;color:#666;">Clearing removes only runs you added in this browser (defaults remain).</div>
+                </div>
+            </div>
+
+            <div class="run-item"><div><div class="run-date">Jan 29 - Thursday Easy</div><div class="run-stats"><span>6.00 mi</span><span>10:16 pace</span><span>146 HR</span><span>15°F</span></div></div></div>
+            <div class="run-item tempo"><div><div class="run-date">Jan 27 - Tuesday Tempo</div><div class="run-stats"><span>6.01 mi</span><span>9:28 pace</span><span>160 HR</span><span>17°F</span></div></div></div>
+            <div class="run-item recovery"><div><div class="run-date">Jan 24 - Saturday Recovery</div><div class="run-stats"><span>6.01 mi</span><span>9:54 pace</span><span>150 HR</span><span>10°F</span></div></div></div>
+            <div class="run-item"><div><div class="run-date">Jan 22 - Thursday Easy</div><div class="run-stats"><span>11.02 mi</span><span>10:36 pace</span><span>163 HR</span><span>80°F</span></div></div></div>
+            <div class="run-item"><div><div class="run-date">Jan 21 - Tuesday Easy</div><div class="run-stats"><span>4.40 mi</span><span>9:25 pace</span><span>164 HR</span><span>80°F</span></div></div></div>
+            <div class="run-item long"><div><div class="run-date">Jan 17 - Saturday Long</div><div class="run-stats"><span>10.00 mi</span><span>9:42 pace</span><span>163 HR</span><span>38°F</span></div></div></div>
+        </div>
+    </div>
+
+        </div>
+
+    
+        <div id="upcomingScheduleTab" style="display:none;">
+            <div class="chart-section" style="padding-top: 0;">
+                <div style="display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; margin-bottom:12px;">
+                    <div style="display:flex; align-items:center; gap:10px; flex-wrap:wrap;">
+                        <h2 style="margin:0;">Upcoming Schedule</h2>
+                        <label style="font-size:0.9em; color:#444; display:flex; align-items:center; gap:8px;">
+                            Month
+                            <select id="scheduleMonthSelect" class="input" style="min-width:140px;">
+                                <option value="0">January</option>
+                                <option value="1">February</option>
+                                <option value="2">March</option>
+                                <option value="3">April</option>
+                                <option value="4">May</option>
+                                <option value="5">June</option>
+                                <option value="6">July</option>
+                                <option value="7">August</option>
+                                <option value="8">September</option>
+                                <option value="9">October</option>
+                                <option value="10">November</option>
+                                <option value="11">December</option>
+                            </select>
+                        </label>
+                    </div>
+                    <div style="font-size:0.95em; color:#444;">
+                        <span style="font-weight:700;">Total:</span> <span id="scheduleMonthTotal">0.0</span> mi
+                        <span id="scheduleMonthLabel" style="margin-left:10px; color:#666;"></span>
+                    </div>
+                </div>
+
+                <div id="scheduleWeeksContainer"></div>
+            </div>
+        </div>
+
+
+    <script>
+        // ----------------------------
+        // Helpers
+        // ----------------------------
+        function pad2(n){ return String(n).padStart(2,'0'); }
+        function formatDisplayDate(d){
+            const opts = { month:'short', day:'numeric' };
+            return d.toLocaleDateString(undefined, opts);
+        }
+        function parsePaceToNumber(paceStr){
+            // "9:28" -> 9.47 (approx)
+            const m = /^\s*(\d+):(\d{2})\s*$/.exec(paceStr);
+            if(!m) return null;
+            const mins = parseInt(m[1],10);
+            const secs = parseInt(m[2],10);
+            return mins + (secs/60);
+        }
+        function hashStringToUnit(str){
+            // deterministic 0..1
+            let h = 2166136261;
+            for(let i=0;i<str.length;i++){
+                h ^= str.charCodeAt(i);
+                h = Math.imul(h, 16777619);
+            }
+            return (h >>> 0) / 4294967295;
+        }
+        function jitter(value, key, amount){
+            const u = hashStringToUnit(key);
+            const offset = (u - 0.5) * 2 * amount; // -amount..+amount
+            return value + offset;
+        }
+
+        // ----------------------------
+        // Countdown
+        // ----------------------------
+        
+    function getEffectiveToday() {
+      // If user selects an As-of Date, use it; otherwise use real today.
+      // Normalize to local noon to avoid timezone edge cases.
+      const asOfEl = document.getElementById('asOfDate');
+      const val = asOfEl ? asOfEl.value : '';
+      const d = val ? new Date(val + 'T12:00:00') : new Date();
+      d.setHours(12, 0, 0, 0);
+      return d;
+    }
+
+function updateCountdown() {
+            // Race date: Philadelphia Marathon — 11/22/2026 (local, normalized to noon for DST/offset safety)
+            const raceDay = new Date('2026-11-22T12:00:00'); // month is 0-based (10 = November)
+            const asOfEl = document.getElementById('asOfDate');
+
+            // Normalize "today" to local noon so "same date" => 0 days, and DST/UTC offsets don't add phantom days
+            let today;
+            if (asOfEl && asOfEl.value) {
+                // Parse YYYY-MM-DD into a local Date
+                const parts = asOfEl.value.split('-');
+                const y = parseInt(parts[0], 10);
+                const m = parseInt(parts[1], 10);
+                const d = parseInt(parts[2], 10);
+                today = new Date(y, m - 1, d, 12, 0, 0, 0);
+            } else {
+                today = new Date();
+                today.setHours(12, 0, 0, 0);
+            }
+
+            const msPerDay = 1000 * 60 * 60 * 24;
+            const rawDays = Math.ceil((raceDay - today) / msPerDay);
+            const diffDays = Math.max(0, rawDays); // clamp after race day
+
+            document.getElementById('countdown').textContent = diffDays;
+        }
+        updateCountdown();
+        const asOfEl = document.getElementById('asOfDate');
+        if (asOfEl) asOfEl.addEventListener('change', updateCountdown);
+
+        // Surface JS errors on-page (prevents silent blank sections)
+        function showErrorBanner(msg){
+            const b = document.getElementById('errorBanner');
+            const t = document.getElementById('errorBannerText');
+            if(b && t){
+                t.textContent = msg;
+                b.style.display = 'block';
+            }
+        }
+        window.addEventListener('error', (e)=>{
+            const msg = (e && e.message) ? e.message : 'Unknown script error';
+            showErrorBanner(msg);
+        });
+
+
+        // ----------------------------
+        // Plan / dates
+        // ----------------------------
+        const planStart = new Date(2025, 11, 29); // Dec 29, 2025 (local), Monday anchor for Week 1 // Monday anchor for Week 1 (partial week Jan 1–4) // Week 1 Monday
+
+// ----------------------------
+        // Week logic (Monday → Sunday)
+        // ----------------------------
+        function startOfWeekMonday(date){
+            const d = new Date(date);
+            d.setHours(0,0,0,0);
+            const day = d.getDay(); // 0=Sun..6=Sat
+            const diff = (day + 6) % 7; // Mon=0, Tue=1, ... Sun=6
+            d.setDate(d.getDate() - diff);
+            return d;
+        }
+
+        function clampWeek(w){
+            if (w < 1) return 1;
+            if (w > 47) return 47;
+            return w;
+        }
+
+        function computeCurrentWeek(){
+            const today = getEffectiveToday();
+            const thisMon = startOfWeekMonday(today);
+            const planMon = startOfWeekMonday(planStart); // already Monday, but keep robust
+            const diffDays = Math.floor((thisMon - planMon) / (1000*60*60*24));
+            const w = Math.floor(diffDays / 7) + 1;
+            return clampWeek(w);
+        }
+
+        function computeWeekBounds(week){
+            const start = weekStartDate(week); // Monday
+            const end = new Date(start);
+            end.setDate(end.getDate() + 6); // Sunday
+            end.setHours(23,59,59,999);
+            return {start, end};
+        }
+
+        function sumMiles(list){
+            return list.reduce((acc,r)=>acc + (Number(r.miles)||0), 0);
+        }
+
+        function updateTopStats(){
+            const currentWeek = computeCurrentWeek();
+            const bounds = computeWeekBounds(currentWeek);
+
+            const runsThisWeek = runs.filter(r => r.dateObj >= bounds.start && r.dateObj <= bounds.end);
+            const thisWeekMiles = sumMiles(runsThisWeek);
+            const asOf = getEffectiveToday();
+            // Treat As-of date as inclusive through end-of-day (runs are stored at midday)
+            const asOfEnd = new Date(asOf);
+            asOfEnd.setHours(23, 59, 59, 999);
+            const runsToDate = runs.filter(r => r.dateObj <= asOfEnd);
+            const totalMiles = sumMiles(runsToDate);
+
+            const cwEl = document.getElementById('currentWeekVal');
+            if (cwEl) cwEl.textContent = `Week ${currentWeek}`;
+
+            const twEl = document.getElementById('thisWeekMilesVal');
+            if (twEl) twEl.textContent = thisWeekMiles.toFixed(2);
+
+            const ttEl = document.getElementById('thisWeekTargetVal');
+            if (ttEl){
+                // Prefer day-level planned entries from the Plan table (localStorage). If none exist for the week, fall back to the baseline weekly plan.
+                let hasAnyPlanned = false;
+                let plannedSum = 0;
+
+                const d = new Date(bounds.start);
+                d.setHours(0,0,0,0);
+                const endD = new Date(bounds.start);
+                endD.setDate(endD.getDate() + 6);
+                endD.setHours(0,0,0,0);
+
+                while (d <= endD){
+                    const iso = toISODateLocal(d);
+                    const v = getField(plannedEdits, iso, 'miles');
+                    if (v !== undefined && v !== null && String(v).trim() !== ''){
+                        hasAnyPlanned = true;
+                        plannedSum += (Number(v) || 0);
+                    }
+                    d.setDate(d.getDate() + 1);
+                }
+
+                if (hasAnyPlanned){
+                    ttEl.textContent = `Planned: ${plannedSum.toFixed(2)} mi`;
+                }else{
+                    const planned = plannedMileage[currentWeek-1];
+                    if (planned !== undefined && planned !== null){
+                        ttEl.textContent = `Planned: ${planned} mi`;
+                    }
+                }
+            }
+
+            const tmEl = document.getElementById('totalMilesVal');
+            if (tmEl) tmEl.textContent = totalMiles.toFixed(1);
+
+            // Last 7 Days (inclusive of As-of Date)
+            const start7 = new Date(asOf);
+            start7.setDate(asOf.getDate() - 6);
+            start7.setHours(12, 0, 0, 0);
+
+            const runsLast7 = runs.filter(r => r.dateObj >= start7 && r.dateObj <= asOfEnd);
+            const last7Miles = sumMiles(runsLast7);
+            const last7Runs = runsLast7.length;
+
+            // Weighted average pace (minutes per mile) across runs that have pace + miles
+            let paceWeighted = 0;
+            let paceMiles = 0;
+            runsLast7.forEach(r => {
+                if (r.paceNum != null && r.miles != null && r.miles > 0) {
+                    paceWeighted += r.paceNum * r.miles;
+                    paceMiles += r.miles;
+                }
+            });
+            let avgPaceStr = '—';
+            if (paceMiles > 0) {
+                const avgPaceNum = paceWeighted / paceMiles;
+                let mins = Math.floor(avgPaceNum);
+                let secs = Math.round((avgPaceNum - mins) * 60);
+                if (secs === 60) { mins += 1; secs = 0; }
+                avgPaceStr = `${mins}:${pad2(secs)}`;
+            }
+
+            const last7MilesEl = document.getElementById('last7MilesVal');
+            if (last7MilesEl) last7MilesEl.textContent = last7Miles.toFixed(2);
+            const last7DetailEl = document.getElementById('last7DetailVal');
+            if (last7DetailEl) last7DetailEl.textContent = `Runs: ${last7Runs} • Avg pace: ${avgPaceStr}`;
+        }
+
+        function weekStartDate(week){
+            const d = new Date(planStart);
+            d.setDate(d.getDate() + (week-1)*7);
+            return d;
+        }
+        function weekDateRange(week){
+            const start = weekStartDate(week);
+            const end = new Date(start);
+            end.setDate(end.getDate()+6);
+            return `${formatDisplayDate(start)} - ${formatDisplayDate(end)}`;
+        }
+
+        const weeks = Array.from({length: 47}, (_, i) => i + 1);
+
+        // Planned mileage (Week 3 corrected to match your stated 24–26 target)
+        const plannedMileage = [
+            11,15,21,21,24,
+            25,27,25,24,
+            31,33,35,28,
+            33,35,37,30,
+            36,38,40,32,
+            38,40,42,34,
+            40,42,45,36,
+            42,45,47,38,
+            45,48,50,40,
+            48,50,52,42,
+            40,35,25,20,15,26.2
+        ];
+
+        // ----------------------------
+        // Default runs (seed) + saved runs
+        // ----------------------------
+        const defaultRuns = [
+            {isoDate:'2026-01-03', miles:8.20, pace:'9:34', hr:156, type:'long', temp:'25°F'},
+            {isoDate:'2026-01-04', miles:3.12, pace:'10:50', hr:139, type:'easy', temp:'30°F'},
+            {isoDate:'2026-01-06', miles:5.01, pace:'10:56', hr:141, type:'easy', temp:'32°F'},
+            {isoDate:'2026-01-08', miles:5.00, pace:'9:57', hr:152, type:'easy', temp:'42°F'},
+
+            {isoDate:'2026-01-10', miles:10.01, pace:'10:01', hr:158, type:'long', temp:'47°F'},
+            {isoDate:'2026-01-13', miles:5.52, pace:'10:31', hr:142, type:'easy', temp:'-'},
+            {isoDate:'2026-01-15', miles:5.52, pace:'9:57', hr:154, type:'easy', temp:'-'},
+            {isoDate:'2026-01-17', miles:10.00, pace:'9:42', hr:163, type:'long', temp:'38°F'},
+            {isoDate:'2026-01-21', miles:4.40, pace:'9:25', hr:164, type:'easy', temp:'80°F'},
+            {isoDate:'2026-01-22', miles:11.02, pace:'10:36', hr:163, type:'easy', temp:'80°F'},
+            {isoDate:'2026-01-24', miles:6.01, pace:'9:54', hr:150, type:'recovery', temp:'10°F'},
+            {isoDate:'2026-01-27', miles:6.01, pace:'9:28', hr:160, type:'tempo', temp:'17°F'},
+            {isoDate:'2026-01-29', miles:6.00, pace:'10:16', hr:146, type:'easy', temp:'15°F'}
+        ];
+
+        function loadSavedRuns(){
+            try{
+                const raw = localStorage.getItem('zach_marathon_runs_v1');
+                if(!raw) return [];
+                const parsed = JSON.parse(raw);
+                if(!Array.isArray(parsed)) return [];
+                return parsed;
+            }catch(e){
+                return [];
+            }
+        }
+        function saveRuns(userRuns){
+            localStorage.setItem('zach_marathon_runs_v1', JSON.stringify(userRuns));
+        }
+
+        // Combined runs = defaults + user-entered
+        let userRuns = loadSavedRuns();
+        let runs = [...defaultRuns, ...userRuns].map((r, idx) => {
+            const d = new Date(r.isoDate);
+            const paceNum = parsePaceToNumber(r.pace);
+            // Derive week number if not provided (Monday→Sunday weeks, anchored at planStart)
+            const diffDays = Math.floor((d - planStart) / (1000*60*60*24));
+            const derivedWeek = Math.floor(diffDays/7) + 1;
+            const week = (r.week != null) ? r.week : Math.max(1, Math.min(47, derivedWeek));
+
+            return {
+                ...r,
+                week,
+                dateObj: d,
+                displayDate: formatDisplayDate(d),
+                paceNum: paceNum,
+                _id: r._id ?? `run_${idx}_${r.isoDate}_${r.type}_${r.miles}`
+            };
+        }).sort((a,b)=>a.dateObj-b.dateObj);
+
+        // ----------------------------
+        // Plan details (used in Monthly Preview)
+        // ----------------------------
+        const weekDetails = {
+            3: {
+                mileage: '24-26 miles',
+                titleSuffix: '',
+                workouts: [
+                    {day:'MON', detail:'OFF'},
+                    {day:'TUE', detail:'6 mi tempo'},
+                    {day:'WED', detail:'Strength'},
+                    {day:'THU', detail:'6 mi easy'},
+                    {day:'FRI', detail:'Strength'},
+                    {day:'SAT', detail:'13-14 mi long'},
+                    {day:'SUN', detail:'Cycle'}
+                ]
+            },
+            4: {
+                mileage: '23-25 miles',
+                titleSuffix: ' - Recovery',
+                workouts: [
+                    {day:'MON', detail:'OFF'},
+                    {day:'TUE', detail:'5 mi easy'},
+                    {day:'WED', detail:'Strength'},
+                    {day:'THU', detail:'5 mi easy'},
+                    {day:'FRI', detail:'Strength'},
+                    {day:'SAT', detail:'10 mi long'},
+                    {day:'SUN', detail:'4 mi easy'}
+                ]
+            },
+            5: {
+                mileage: '31-33 miles',
+                titleSuffix: '',
+                workouts: [
+                    {day:'MON', detail:'OFF'},
+                    {day:'TUE', detail:'7 mi (3 mi tempo)'},
+                    {day:'WED', detail:'Strength'},
+                    {day:'THU', detail:'7 mi easy'},
+                    {day:'FRI', detail:'Strength'},
+                    {day:'SAT', detail:'13-14 mi long'},
+                    {day:'SUN', detail:'5-6 mi easy'}
+                ]
+            },
+            6: {
+                mileage: '33-35 miles',
+                titleSuffix: '',
+                workouts: [
+                    {day:'MON', detail:'OFF'},
+                    {day:'TUE', detail:'7 mi (4 mi tempo)'},
+                    {day:'WED', detail:'Strength'},
+                    {day:'THU', detail:'7 mi easy'},
+                    {day:'FRI', detail:'Strength'},
+                    {day:'SAT', detail:'14 mi long'},
+                    {day:'SUN', detail:'6 mi easy'}
+                ]
+            },
+            7: {
+                mileage: '27-29 miles',
+                titleSuffix: ' - Recovery',
+                workouts: [
+                    {day:'MON', detail:'OFF'},
+                    {day:'TUE', detail:'6 mi easy'},
+                    {day:'WED', detail:'Strength'},
+                    {day:'THU', detail:'6 mi easy'},
+                    {day:'FRI', detail:'Strength'},
+                    {day:'SAT', detail:'12 mi long'},
+                    {day:'SUN', detail:'5 mi easy'}
+                ]
+            }
+        };
+
+        function workoutClass(detail){
+            const s = String(detail).toLowerCase();
+            if(s.includes('off') || s.includes('rest')) return 'off';
+            if(s.includes('tempo')) return 'tempo';
+            if(s.includes('long')) return 'long';
+            if(s.includes('strength')) return 'strength';
+            if(s.includes('cycle') || s.includes('bike') || s.includes('cross')) return 'cross';
+            if(s.includes('recovery')) return 'recovery';
+            if(s.includes('easy')) return 'easy';
+            return '';
+        }
+
+        // ----------------------------
+        // Planned Workouts Table (planned + actual fields editable)
+        // v53: DEFAULT_DAYS + OVERRIDES (diff-only) => EFFECTIVE_DAYS (computed)
+        // ----------------------------
+        const PLAN_VERSION = '2026-plan-v1'; // keep stable across file versions so your edits carry forward
+        const LEGACY_PLAN_PLANNED_STORAGE_KEY = `zach_marathon_planned_v1_${PLAN_VERSION}`; // pre-v52 (for migration only)
+        const LEGACY_PLAN_ACTUAL_STORAGE_KEY  = `zach_marathon_actual_v1_${PLAN_VERSION}`;  // pre-v52 (for migration only)
+        const PLAN_OVERRIDES_STORAGE_KEY      = `zach_marathon_day_overrides_v1_${PLAN_VERSION}`; // v52+
+
+        function loadEdits(key){
+            try{
+                const raw = localStorage.getItem(key);
+                if(!raw) return {};
+                const obj = JSON.parse(raw);
+                return (obj && typeof obj === 'object') ? obj : {};
+            }catch(e){
+                return {};
+            }
+        }
+        function saveEdits(key, edits){
+            try{
+                localStorage.setItem(key, JSON.stringify(edits || {}));
+            }catch(e){}
+        }
+
+        // Legacy in-memory views (kept so the rest of the dashboard doesn't break in v52).
+        // IMPORTANT: These are now derived from EFFECTIVE_DAYS and are NOT saved directly.
+        let plannedEdits = {};
+        let actualEdits = {};
+
+        // Default embedded plan (day-by-day) — single source of truth inside the HTML.
+        // Structure: DEFAULT_DAYS[iso] = { planned:{type,miles}, actual:{type,miles,pace,hr,weather,notes} }
+        const DEFAULT_PLANNED_EDITS = {"2026-01-03":{"type":"Long","miles":8.0},"2026-01-04":{"type":"Easy","miles":3.1},"2026-01-06":{"type":"Easy","miles":5.0},"2026-01-10":{"type":"Long","miles":10.0},"2026-01-12":{"type":"OFF","miles":0.0},"2026-01-13":{"type":"Easy","miles":5.0},"2026-01-14":{"type":"Strength","miles":0.0},"2026-01-15":{"type":"Easy","miles":5.0},"2026-01-16":{"type":"Strength","miles":0.0},"2026-01-17":{"type":"Long","miles":10.0},"2026-01-18":{"type":"Easy","miles":5.0},"2026-01-19":{"type":"OFF","miles":0.0},"2026-01-20":{"type":"Easy","miles":5.0},"2026-01-21":{"type":"Strength","miles":0.0},"2026-01-22":{"type":"Easy","miles":8.0},"2026-01-23":{"type":"Strength","miles":0.0},"2026-01-24":{"type":"Long","miles":11.0},"2026-01-25":{"type":"Easy","miles":5.0},"2026-01-26":{"type":"OFF","miles":0.0},"2026-01-27":{"type":"Tempo","miles":6.0},"2026-01-28":{"type":"Strength","miles":0.0},"2026-01-29":{"type":"Easy","miles":6.0},"2026-01-30":{"type":"Strength","miles":0.0},"2026-01-31":{"type":"Long","miles":13.0},"2026-02-01":{"type":"Cross","miles":0.0},"2026-02-02":{"type":"OFF","miles":0.0},"2026-02-03":{"type":"Easy","miles":5.0},"2026-02-04":{"type":"Strength","miles":0.0},"2026-02-05":{"type":"Easy","miles":5.0},"2026-02-06":{"type":"Strength","miles":0.0},"2026-02-07":{"type":"Long","miles":10.0},"2026-02-08":{"type":"Easy","miles":4.0},"2026-02-09":{"type":"OFF","miles":0.0},"2026-02-10":{"type":"Tempo","miles":7.0},"2026-02-11":{"type":"Strength","miles":0.0},"2026-02-12":{"type":"Easy","miles":7.0},"2026-02-13":{"type":"Strength","miles":0.0},"2026-02-14":{"type":"Long","miles":13.0},"2026-02-15":{"type":"Easy","miles":4.0},"2026-02-16":{"type":"OFF","miles":0.0},"2026-02-17":{"type":"Tempo","miles":7.0},"2026-02-18":{"type":"Strength","miles":0.0},"2026-02-19":{"type":"Easy","miles":7.0},"2026-02-20":{"type":"Strength","miles":0.0},"2026-02-21":{"type":"Long","miles":14.0},"2026-02-22":{"type":"Easy","miles":5.0},"2026-02-23":{"type":"OFF","miles":0.0},"2026-02-24":{"type":"Easy","miles":6.0},"2026-02-25":{"type":"Strength","miles":0.0},"2026-02-26":{"type":"Easy","miles":6.0},"2026-02-27":{"type":"Strength","miles":0.0},"2026-02-28":{"type":"Long","miles":12.0},"2026-03-01":{"type":"Easy","miles":4.0},"2026-03-02":{"type":"OFF","miles":0.0},"2026-03-03":{"type":"Tempo","miles":7.0},"2026-03-04":{"type":"Strength","miles":0.0},"2026-03-05":{"type":"Easy","miles":7.0},"2026-03-06":{"type":"Strength","miles":0.0},"2026-03-07":{"type":"Long","miles":14.0},"2026-03-08":{"type":"Easy","miles":5.0},"2026-03-09":{"type":"OFF","miles":0.0},"2026-03-10":{"type":"Tempo","miles":8.0},"2026-03-11":{"type":"Strength","miles":0.0},"2026-03-12":{"type":"Easy","miles":7.0},"2026-03-13":{"type":"Strength","miles":0.0},"2026-03-14":{"type":"Long","miles":15.0},"2026-03-15":{"type":"Easy","miles":5.0},"2026-03-16":{"type":"OFF","miles":0.0},"2026-03-17":{"type":"Tempo","miles":8.0},"2026-03-18":{"type":"Strength","miles":0.0},"2026-03-19":{"type":"Easy","miles":8.0},"2026-03-20":{"type":"Strength","miles":0.0},"2026-03-21":{"type":"Long","miles":16.0},"2026-03-22":{"type":"Easy","miles":5.0},"2026-03-23":{"type":"OFF","miles":0.0},"2026-03-24":{"type":"Easy","miles":6.0},"2026-03-25":{"type":"Strength","miles":0.0},"2026-03-26":{"type":"Easy","miles":6.0},"2026-03-27":{"type":"Strength","miles":0.0},"2026-03-28":{"type":"Long","miles":13.0},"2026-03-29":{"type":"Easy","miles":5.0},"2026-03-30":{"type":"OFF","miles":0.0},"2026-03-31":{"type":"Tempo","miles":8.0},"2026-04-01":{"type":"Strength","miles":0.0},"2026-04-02":{"type":"Easy","miles":8.0},"2026-04-03":{"type":"Strength","miles":0.0},"2026-04-04":{"type":"Long","miles":16.0},"2026-04-05":{"type":"Easy","miles":4.0},"2026-04-06":{"type":"OFF","miles":0.0},"2026-04-07":{"type":"Tempo","miles":9.0},"2026-04-08":{"type":"Strength","miles":0.0},"2026-04-09":{"type":"Easy","miles":8.0},"2026-04-10":{"type":"Strength","miles":0.0},"2026-04-11":{"type":"Long","miles":17.0},"2026-04-12":{"type":"Easy","miles":4.0},"2026-04-13":{"type":"OFF","miles":0.0},"2026-04-14":{"type":"Tempo","miles":9.0},"2026-04-15":{"type":"Strength","miles":0.0},"2026-04-16":{"type":"Easy","miles":8.0},"2026-04-17":{"type":"Strength","miles":0.0},"2026-04-18":{"type":"Long","miles":18.0},"2026-04-19":{"type":"Easy","miles":5.0},"2026-04-20":{"type":"OFF","miles":0.0},"2026-04-21":{"type":"Easy","miles":7.0},"2026-04-22":{"type":"Strength","miles":0.0},"2026-04-23":{"type":"Easy","miles":7.0},"2026-04-24":{"type":"Strength","miles":0.0},"2026-04-25":{"type":"Long","miles":14.0},"2026-04-26":{"type":"Easy","miles":4.0},"2026-04-27":{"type":"OFF","miles":0.0},"2026-04-28":{"type":"Tempo","miles":9.0},"2026-04-29":{"type":"Strength","miles":0.0},"2026-04-30":{"type":"Easy","miles":8.0},"2026-05-01":{"type":"Strength","miles":0.0},"2026-05-02":{"type":"Long","miles":17.0},"2026-05-03":{"type":"Easy","miles":4.0},"2026-05-04":{"type":"OFF","miles":0.0},"2026-05-05":{"type":"Intervals","miles":9.0},"2026-05-06":{"type":"Strength","miles":0.0},"2026-05-07":{"type":"Easy","miles":8.0},"2026-05-08":{"type":"Strength","miles":0.0},"2026-05-09":{"type":"Long","miles":18.0},"2026-05-10":{"type":"Easy","miles":5.0},"2026-05-11":{"type":"OFF","miles":0.0},"2026-05-12":{"type":"Tempo","miles":10.0},"2026-05-13":{"type":"Strength","miles":0.0},"2026-05-14":{"type":"Easy","miles":8.0},"2026-05-15":{"type":"Strength","miles":0.0},"2026-05-16":{"type":"Long","miles":19.0},"2026-05-17":{"type":"Easy","miles":5.0},"2026-05-18":{"type":"OFF","miles":0.0},"2026-05-19":{"type":"Easy","miles":7.0},"2026-05-20":{"type":"Strength","miles":0.0},"2026-05-21":{"type":"Easy","miles":7.0},"2026-05-22":{"type":"Strength","miles":0.0},"2026-05-23":{"type":"Long","miles":15.0},"2026-05-24":{"type":"Easy","miles":5.0},"2026-05-25":{"type":"OFF","miles":0.0},"2026-05-26":{"type":"Intervals","miles":10.0},"2026-05-27":{"type":"Strength","miles":0.0},"2026-05-28":{"type":"Easy","miles":8.0},"2026-05-29":{"type":"Strength","miles":0.0},"2026-05-30":{"type":"Long","miles":18.0},"2026-05-31":{"type":"Easy","miles":4.0},"2026-06-01":{"type":"OFF","miles":0.0},"2026-06-02":{"type":"Tempo","miles":10.0},"2026-06-03":{"type":"Strength","miles":0.0},"2026-06-04":{"type":"Easy","miles":8.0},"2026-06-05":{"type":"Strength","miles":0.0},"2026-06-06":{"type":"Long","miles":19.0},"2026-06-07":{"type":"Easy","miles":5.0},"2026-06-08":{"type":"OFF","miles":0.0},"2026-06-09":{"type":"Intervals","miles":10.0},"2026-06-10":{"type":"Strength","miles":0.0},"2026-06-11":{"type":"Easy","miles":9.0},"2026-06-12":{"type":"Strength","miles":0.0},"2026-06-13":{"type":"Long","miles":20.0},"2026-06-14":{"type":"Easy","miles":6.0},"2026-06-15":{"type":"OFF","miles":0.0},"2026-06-16":{"type":"Easy","miles":8.0},"2026-06-17":{"type":"Strength","miles":0.0},"2026-06-18":{"type":"Easy","miles":8.0},"2026-06-19":{"type":"Strength","miles":0.0},"2026-06-20":{"type":"Long","miles":16.0},"2026-06-21":{"type":"Easy","miles":4.0},"2026-06-22":{"type":"OFF","miles":0.0},"2026-06-23":{"type":"Tempo","miles":10.0},"2026-06-24":{"type":"Strength","miles":0.0},"2026-06-25":{"type":"Easy","miles":8.0},"2026-06-26":{"type":"Strength","miles":0.0},"2026-06-27":{"type":"Long","miles":19.0},"2026-06-28":{"type":"Easy","miles":5.0},"2026-06-29":{"type":"OFF","miles":0.0},"2026-06-30":{"type":"Intervals","miles":11.0},"2026-07-01":{"type":"Strength","miles":0.0},"2026-07-02":{"type":"Easy","miles":9.0},"2026-07-03":{"type":"Strength","miles":0.0},"2026-07-04":{"type":"Long","miles":20.0},"2026-07-05":{"type":"Easy","miles":5.0},"2026-07-06":{"type":"OFF","miles":0.0},"2026-07-07":{"type":"Tempo","miles":11.0},"2026-07-08":{"type":"Strength","miles":0.0},"2026-07-09":{"type":"Easy","miles":9.0},"2026-07-10":{"type":"Strength","miles":0.0},"2026-07-11":{"type":"Long","miles":21.0},"2026-07-12":{"type":"Easy","miles":6.0},"2026-07-13":{"type":"OFF","miles":0.0},"2026-07-14":{"type":"Easy","miles":8.0},"2026-07-15":{"type":"Strength","miles":0.0},"2026-07-16":{"type":"Easy","miles":8.0},"2026-07-17":{"type":"Strength","miles":0.0},"2026-07-18":{"type":"Long","miles":17.0},"2026-07-19":{"type":"Easy","miles":5.0},"2026-07-20":{"type":"OFF","miles":0.0},"2026-07-21":{"type":"MP Run","miles":11.0},"2026-07-22":{"type":"Strength","miles":0.0},"2026-07-23":{"type":"Easy","miles":9.0},"2026-07-24":{"type":"Strength","miles":0.0},"2026-07-25":{"type":"Long","miles":20.0},"2026-07-26":{"type":"Easy","miles":5.0},"2026-07-27":{"type":"OFF","miles":0.0},"2026-07-28":{"type":"MP Run","miles":12.0},"2026-07-29":{"type":"Strength","miles":0.0},"2026-07-30":{"type":"Easy","miles":9.0},"2026-07-31":{"type":"Strength","miles":0.0},"2026-08-01":{"type":"Long","miles":21.0},"2026-08-02":{"type":"Easy","miles":6.0},"2026-08-03":{"type":"OFF","miles":0.0},"2026-08-04":{"type":"MP Run","miles":12.0},"2026-08-05":{"type":"Strength","miles":0.0},"2026-08-06":{"type":"Easy","miles":10.0},"2026-08-07":{"type":"Strength","miles":0.0},"2026-08-08":{"type":"Long","miles":22.0},"2026-08-09":{"type":"Easy","miles":6.0},"2026-08-10":{"type":"OFF","miles":0.0},"2026-08-11":{"type":"Easy","miles":8.0},"2026-08-12":{"type":"Strength","miles":0.0},"2026-08-13":{"type":"Easy","miles":8.0},"2026-08-14":{"type":"Strength","miles":0.0},"2026-08-15":{"type":"Long","miles":18.0},"2026-08-16":{"type":"Easy","miles":6.0},"2026-08-17":{"type":"OFF","miles":0.0},"2026-08-18":{"type":"MP Run","miles":12.0},"2026-08-19":{"type":"Strength","miles":0.0},"2026-08-20":{"type":"Easy","miles":9.0},"2026-08-21":{"type":"Strength","miles":0.0},"2026-08-22":{"type":"Long","miles":21.0},"2026-08-23":{"type":"Easy","miles":6.0},"2026-08-24":{"type":"OFF","miles":0.0},"2026-08-25":{"type":"MP Run","miles":12.0},"2026-08-26":{"type":"Strength","miles":0.0},"2026-08-27":{"type":"Easy","miles":10.0},"2026-08-28":{"type":"Strength","miles":0.0},"2026-08-29":{"type":"Long","miles":22.0},"2026-08-30":{"type":"Easy","miles":6.0},"2026-08-31":{"type":"OFF","miles":0.0},"2026-09-01":{"type":"MP Run","miles":13.0},"2026-09-02":{"type":"Strength","miles":0.0},"2026-09-03":{"type":"Easy","miles":10.0},"2026-09-04":{"type":"Strength","miles":0.0},"2026-09-05":{"type":"Long","miles":22.0},"2026-09-06":{"type":"Easy","miles":7.0},"2026-09-07":{"type":"OFF","miles":0.0},"2026-09-08":{"type":"Easy","miles":9.0},"2026-09-09":{"type":"Strength","miles":0.0},"2026-09-10":{"type":"Easy","miles":9.0},"2026-09-11":{"type":"Strength","miles":0.0},"2026-09-12":{"type":"Long","miles":18.0},"2026-09-13":{"type":"Easy","miles":6.0},"2026-09-14":{"type":"OFF","miles":0.0},"2026-09-15":{"type":"MP Run","miles":10.0},"2026-09-16":{"type":"Strength","miles":0.0},"2026-09-17":{"type":"Easy","miles":8.0},"2026-09-18":{"type":"Strength","miles":0.0},"2026-09-19":{"type":"Long","miles":16.0},"2026-09-20":{"type":"Easy","miles":6.0},"2026-09-21":{"type":"OFF","miles":0.0},"2026-09-22":{"type":"Easy","miles":8.0},"2026-09-23":{"type":"Strength","miles":0.0},"2026-09-24":{"type":"Easy","miles":7.0},"2026-09-25":{"type":"Strength","miles":0.0},"2026-09-26":{"type":"Long","miles":14.0},"2026-09-27":{"type":"Easy","miles":6.0},"2026-09-28":{"type":"OFF","miles":0.0},"2026-09-29":{"type":"Easy","miles":6.0},"2026-09-30":{"type":"Strength","miles":0.0},"2026-10-01":{"type":"Easy","miles":5.0},"2026-10-02":{"type":"OFF","miles":0.0},"2026-10-03":{"type":"Long","miles":10.0},"2026-10-04":{"type":"Easy","miles":4.0},"2026-10-05":{"type":"OFF","miles":0.0},"2026-10-06":{"type":"Easy","miles":6.0},"2026-10-07":{"type":"Strength","miles":0.0},"2026-10-08":{"type":"Easy","miles":5.0},"2026-10-09":{"type":"OFF","miles":0.0},"2026-10-10":{"type":"Easy","miles":10.0},"2026-10-11":{"type":"Easy","miles":4.0},"2026-10-12":{"type":"OFF","miles":0.0},"2026-10-13":{"type":"Easy","miles":5.0},"2026-10-14":{"type":"OFF","miles":0.0},"2026-10-15":{"type":"Easy","miles":4.0},"2026-10-16":{"type":"OFF","miles":0.0},"2026-10-17":{"type":"Easy","miles":8.0},"2026-10-18":{"type":"Easy","miles":3.0},"2026-11-09":{"type":"OFF","miles":0.0},"2026-11-10":{"type":"Easy","miles":4.0},"2026-11-11":{"type":"OFF","miles":0.0},"2026-11-12":{"type":"Easy","miles":4.0},"2026-11-13":{"type":"OFF","miles":0.0},"2026-11-14":{"type":"Easy","miles":5.0},"2026-11-15":{"type":"Easy","miles":2.0},"2026-11-16":{"type":"OFF","miles":0.0},"2026-11-17":{"type":"Easy","miles":3.0},"2026-11-18":{"type":"OFF","miles":0.0},"2026-11-19":{"type":"Easy","miles":3.0},"2026-11-20":{"type":"OFF","miles":0.0},"2026-11-21":{"type":"Shakeout","miles":2.0},"2026-11-22":{"type":"RACE","miles":26.2},"2026-10-19":{"type":"OFF","miles":0.0},"2026-10-20":{"type":"Easy","miles":5.0},"2026-10-21":{"type":"OFF","miles":0.0},"2026-10-22":{"type":"Easy","miles":4.0},"2026-10-23":{"type":"OFF","miles":0.0},"2026-10-24":{"type":"Long","miles":7.0},"2026-10-25":{"type":"Easy","miles":2.0},"2026-10-26":{"type":"OFF","miles":0.0},"2026-10-27":{"type":"Easy","miles":4.0},"2026-10-28":{"type":"OFF","miles":0.0},"2026-10-29":{"type":"Easy","miles":4.0},"2026-10-30":{"type":"OFF","miles":0.0},"2026-10-31":{"type":"Long","miles":6.0},"2026-11-01":{"type":"Easy","miles":2.0},"2026-11-02":{"type":"OFF","miles":0.0},"2026-11-03":{"type":"Easy","miles":4.0},"2026-11-04":{"type":"OFF","miles":0.0},"2026-11-05":{"type":"Easy","miles":4.0},"2026-11-06":{"type":"OFF","miles":0.0},"2026-11-07":{"type":"Long","miles":5.0},"2026-11-08":{"type":"Easy","miles":2.0}};
+        const DEFAULT_ACTUAL_EDITS = {"2026-01-03":{"type":"Long","miles":8.2,"pace":"9:34","hr":"156","weather":"25","notes":""},"2026-01-04":{"type":"Easy","miles":3.1,"pace":"10:50","hr":"139","weather":"30","notes":""},"2026-01-06":{"type":"Easy","miles":5.01,"pace":"10:56","hr":"141","weather":"32","notes":""},"2026-01-10":{"type":"Long","miles":10.0,"pace":"10:01","hr":"158","weather":"47","notes":""},"2026-01-13":{"type":"Easy","miles":5.52,"pace":"10:31","hr":"142","weather":"","notes":""},"2026-01-15":{"type":"Easy","miles":5.52,"pace":"9:57","hr":"154","weather":"","notes":""},"2026-01-17":{"type":"Long","miles":10.0,"pace":"9:42","hr":"163","weather":"38\u00b0F","notes":""},"2026-01-21":{"type":"Easy","miles":4.4,"pace":"9:25","hr":"164","weather":"80\u00b0F","notes":""},"2026-01-22":{"type":"Easy","miles":11.02,"pace":"10:36","hr":"163","weather":"80\u00b0F","notes":""},"2026-01-24":{"type":"Recovery","miles":6.01,"pace":"9:54","hr":"150","weather":"10\u00b0F","notes":""},"2026-01-27":{"type":"Tempo","miles":6.01,"pace":"9:28","hr":"160","weather":"17\u00b0F","notes":""},"2026-01-29":{"type":"Easy","miles":6.0,"pace":"10:16","hr":"146","weather":"15\u00b0F","notes":""}};
+
+        const DEFAULT_DAYS = (function buildDefaultDays(){
+            const days = {};
+            // Planned
+            for(const iso in DEFAULT_PLANNED_EDITS){
+                if(!days[iso]) days[iso] = {};
+                days[iso].planned = {
+                    type: DEFAULT_PLANNED_EDITS[iso]?.type ?? '',
+                    miles: DEFAULT_PLANNED_EDITS[iso]?.miles ?? ''
+                };
+            }
+            // Actual
+            for(const iso in DEFAULT_ACTUAL_EDITS){
+                if(!days[iso]) days[iso] = {};
+                days[iso].actual = {
+                    type: DEFAULT_ACTUAL_EDITS[iso]?.type ?? '',
+                    miles: DEFAULT_ACTUAL_EDITS[iso]?.miles ?? '',
+                    pace: DEFAULT_ACTUAL_EDITS[iso]?.pace ?? '',
+                    hr: DEFAULT_ACTUAL_EDITS[iso]?.hr ?? '',
+                    weather: DEFAULT_ACTUAL_EDITS[iso]?.weather ?? '',
+                    notes: DEFAULT_ACTUAL_EDITS[iso]?.notes ?? ''
+                };
+            }
+            return days;
+        })();
+
+        // OVERRIDES: diff-only, keyed by date (YYYY-MM-DD).
+        // Example: OVERRIDES['2026-01-17'] = { planned:{miles: 10}, actual:{pace:'9:42'} }
+        let OVERRIDES = loadEdits(PLAN_OVERRIDES_STORAGE_KEY);
+
+        function deepMergeDay(base, override){
+            const out = {
+                planned: { ...(base?.planned || {}) },
+                actual:  { ...(base?.actual  || {}) }
+            };
+            if(override && typeof override === 'object'){
+                if(override.planned && typeof override.planned === 'object'){
+                    out.planned = { ...out.planned, ...override.planned };
+                }
+                if(override.actual && typeof override.actual === 'object'){
+                    out.actual = { ...out.actual, ...override.actual };
+                }
+            }
+            return out;
+        }
+
+        function getEffectiveDay(isoDate){
+            const base = DEFAULT_DAYS[isoDate] || {};
+            const ov = (OVERRIDES && typeof OVERRIDES === 'object') ? OVERRIDES[isoDate] : undefined;
+            return deepMergeDay(base, ov);
+        }
+
+        function rebuildLegacyEditsFromEffective(){
+            plannedEdits = {};
+            actualEdits = {};
+
+            // include all default days
+            for(const iso in DEFAULT_DAYS){
+                const eff = getEffectiveDay(iso);
+                if(eff.planned && (eff.planned.type !== undefined || eff.planned.miles !== undefined)){
+                    plannedEdits[iso] = {
+                        type: eff.planned.type,
+                        miles: eff.planned.miles
+                    };
+                }
+                if(eff.actual && (eff.actual.type !== undefined || eff.actual.miles !== undefined || eff.actual.pace !== undefined || eff.actual.hr !== undefined || eff.actual.weather !== undefined || eff.actual.notes !== undefined)){
+                    actualEdits[iso] = {
+                        type: eff.actual.type,
+                        miles: eff.actual.miles,
+                        pace: eff.actual.pace,
+                        hr: eff.actual.hr,
+                        weather: eff.actual.weather,
+                        notes: eff.actual.notes
+                    };
+                }
+            }
+
+            // include any override-only days not present in DEFAULT_DAYS (future-proof)
+            if(OVERRIDES && typeof OVERRIDES === 'object'){
+                for(const iso in OVERRIDES){
+                    if(DEFAULT_DAYS[iso]) continue;
+                    const eff = getEffectiveDay(iso);
+                    if(eff.planned && (eff.planned.type !== undefined || eff.planned.miles !== undefined)){
+                        plannedEdits[iso] = { type: eff.planned.type, miles: eff.planned.miles };
+                    }
+                    if(eff.actual && (eff.actual.type !== undefined || eff.actual.miles !== undefined || eff.actual.pace !== undefined || eff.actual.hr !== undefined || eff.actual.weather !== undefined || eff.actual.notes !== undefined)){
+                        actualEdits[iso] = {
+                            type: eff.actual.type,
+                            miles: eff.actual.miles,
+                            pace: eff.actual.pace,
+                            hr: eff.actual.hr,
+                            weather: eff.actual.weather,
+                            notes: eff.actual.notes
+                        };
+                    }
+                }
+            }
+        }
+
+        function normalizeForCompare(v){
+            if(v === undefined || v === null) return '';
+            return String(v).trim();
+        }
+        function normalizeNumberForCompare(v){
+            if(v === undefined || v === null || String(v).trim() === '') return '';
+            const n = Number(v);
+            if(!isFinite(n)) return String(v).trim(); // fall back to raw string comparison
+            return String(Math.round(n * 100) / 100);
+        }
+
+        function normalizeTypeKey(v){
+            // Normalize type strings to the lower-case keys used by charts/table selects.
+            const s = String(v ?? '').trim().toLowerCase();
+            if(!s) return '';
+            if(s === 'off' || s === 'rest') return 'off';
+            if(s === 'easy') return 'easy';
+            if(s === 'long' || s === 'long run') return 'long';
+            if(s === 'tempo') return 'tempo';
+            if(s === 'recovery') return 'recovery';
+            if(s === 'interval' || s === 'intervals') return 'interval';
+            if(s === 'race') return 'race';
+            if(s === 'strength') return 'strength';
+            if(s === 'cross' || s === 'crosstrain' || s === 'cross-train' || s === 'cycle' || s === 'bike') return 'cross';
+            if(s === 'shakeout') return 'easy';
+            return s;
+        }
+
+
+        // ----------------------------
+        // v58: Export / Import OVERRIDES JSON (portable across browsers/devices)
+        // ----------------------------
+        const OVERRIDES_IO_SCHEMA_VERSION = 1;
+        const DASHBOARD_FILE_VERSION = 'v59';
+
+        function setOverridesIoStatus(msg, isError=false){
+            const el = document.getElementById('overridesIoStatus');
+            if(!el) return;
+            el.textContent = msg || '';
+            el.style.color = isError ? '#7a1f1f' : '#666';
+        }
+
+        function isPlainObject(x){
+            return !!x && typeof x === 'object' && !Array.isArray(x);
+        }
+
+        function tidyOverridesObject(obj){
+            // Ensure diff-only vs DEFAULT_DAYS, and remove empty shells.
+            if(!isPlainObject(obj)) return {};
+            const out = JSON.parse(JSON.stringify(obj)); // clone
+
+            for(const iso of Object.keys(out)){
+                const dayOv = out[iso];
+                if(!isPlainObject(dayOv)){ delete out[iso]; continue; }
+
+                for(const section of ['planned','actual']){
+                    if(!dayOv[section]) continue;
+                    if(!isPlainObject(dayOv[section])){ delete dayOv[section]; continue; }
+
+                    const defDay = DEFAULT_DAYS[iso] || {};
+                    const defSection = (section === 'planned') ? (defDay.planned || {}) : (defDay.actual || {});
+
+                    for(const field of Object.keys(dayOv[section])){
+                        const rawVal = dayOv[section][field];
+                        const isMilesField = (field === 'miles');
+
+                        const incoming = isMilesField ? normalizeNumberForCompare(rawVal) : normalizeForCompare(rawVal);
+                        const defVal = isMilesField ? normalizeNumberForCompare(defSection[field]) : normalizeForCompare(defSection[field]);
+
+                        if(incoming === defVal){
+                            delete dayOv[section][field];
+                        } else {
+                            // Coerce miles to number where reasonable
+                            if(isMilesField && incoming !== ''){
+                                const n = Number(incoming);
+                                dayOv[section][field] = (isFinite(n) ? n : rawVal);
+                            } else {
+                                dayOv[section][field] = rawVal;
+                            }
+                        }
+                    }
+
+                    if(Object.keys(dayOv[section]).length === 0){
+                        delete dayOv[section];
+                    }
+                }
+
+                if(Object.keys(dayOv).length === 0){
+                    delete out[iso];
+                }
+            }
+
+            return out;
+        }
+
+        function mergeOverrides(base, incoming){
+            const out = isPlainObject(base) ? JSON.parse(JSON.stringify(base)) : {};
+            if(!isPlainObject(incoming)) return out;
+
+            for(const iso of Object.keys(incoming)){
+                if(!isPlainObject(incoming[iso])) continue;
+                if(!out[iso]) out[iso] = {};
+
+                for(const section of ['planned','actual']){
+                    if(!incoming[iso][section]) continue;
+                    if(!isPlainObject(incoming[iso][section])) continue;
+
+                    if(!out[iso][section]) out[iso][section] = {};
+                    Object.assign(out[iso][section], incoming[iso][section]);
+                }
+            }
+            return out;
+        }
+
+        function exportOverridesJson(){
+            try{
+                const payload = {
+                    schemaVersion: OVERRIDES_IO_SCHEMA_VERSION,
+                    dashboardFileVersion: DASHBOARD_FILE_VERSION,
+                    planVersion: PLAN_VERSION,
+                    exportedAt: new Date().toISOString(),
+                    overrides: OVERRIDES || {}
+                };
+                const pretty = JSON.stringify(payload, null, 2);
+                const blob = new Blob([pretty], {type:'application/json'});
+                const url = URL.createObjectURL(blob);
+
+                const d = new Date();
+                const yyyy = d.getFullYear();
+                const mm = String(d.getMonth()+1).padStart(2,'0');
+                const dd = String(d.getDate()).padStart(2,'0');
+                const filename = `marathon-overrides-${yyyy}-${mm}-${dd}.json`;
+
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = filename;
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+                URL.revokeObjectURL(url);
+
+                setOverridesIoStatus(`Exported ${Object.keys(payload.overrides||{}).length} override day(s)`);
+                setTimeout(()=>setOverridesIoStatus(''), 4000);
+            }catch(e){
+                setOverridesIoStatus('Export failed', true);
+            }
+        }
+
+        async function importOverridesJsonFile(file){
+            if(!file) return;
+            try{
+                const text = await file.text();
+                const parsed = JSON.parse(text);
+
+                // Accept either a wrapped payload {overrides: {...}} or a raw overrides object.
+                let incomingOverrides = null;
+
+                if(isPlainObject(parsed) && isPlainObject(parsed.overrides)){
+                    // Validate planVersion if present (warn but still allow)
+                    if(parsed.planVersion && parsed.planVersion !== PLAN_VERSION){
+                        setOverridesIoStatus('Imported file has a different planVersion; importing anyway', true);
+                        setTimeout(()=>setOverridesIoStatus(''), 6000);
+                    }
+                    incomingOverrides = parsed.overrides;
+                } else if(isPlainObject(parsed)) {
+                    incomingOverrides = parsed;
+                }
+
+                if(!isPlainObject(incomingOverrides)){
+                    setOverridesIoStatus('Import failed: JSON must contain an overrides object', true);
+                    return;
+                }
+
+                // Tidy and merge
+                const cleaned = tidyOverridesObject(incomingOverrides);
+                OVERRIDES = mergeOverrides(OVERRIDES, cleaned);
+                // Final tidy pass across merged object (keeps diff-only)
+                OVERRIDES = tidyOverridesObject(OVERRIDES);
+
+                saveEdits(PLAN_OVERRIDES_STORAGE_KEY, OVERRIDES);
+
+                rebuildLegacyEditsFromEffective();
+                if(window.updatePlannedSeriesFromEdits) window.updatePlannedSeriesFromEdits();
+                if(window.updateTopStats) window.updateTopStats();
+                if(window.recomputeAll) window.recomputeAll();
+                if(typeof renderPlanTable === 'function') renderPlanTable();
+
+                setOverridesIoStatus(`Imported. Now ${Object.keys(OVERRIDES||{}).length} override day(s) total`);
+                setTimeout(()=>setOverridesIoStatus(''), 5000);
+            }catch(e){
+                setOverridesIoStatus('Import failed: invalid JSON', true);
+            }
+        }
+
+        // Wire up buttons (Plan Table tab)
+        (function initOverridesExportImport(){
+            const exportBtn = document.getElementById('exportOverridesBtn');
+            const importBtn = document.getElementById('importOverridesBtn');
+            const fileInput = document.getElementById('importOverridesFile');
+
+            if(exportBtn){
+                exportBtn.addEventListener('click', exportOverridesJson);
+            }
+            if(importBtn && fileInput){
+                importBtn.addEventListener('click', ()=>fileInput.click());
+                fileInput.addEventListener('change', ()=>{
+                    const f = fileInput.files && fileInput.files[0];
+                    // reset input so importing same file twice still triggers change
+                    fileInput.value = '';
+                    importOverridesJsonFile(f);
+                });
+            }
+        })();
+
+
+        function setOverrideField(isoDate, section, field, rawValue){
+            if(!isoDate) return;
+
+            const isMilesField = (field === 'miles');
+            const incoming = isMilesField ? normalizeNumberForCompare(rawValue) : normalizeForCompare(rawValue);
+
+            const defDay = DEFAULT_DAYS[isoDate] || {};
+            const defSection = (section === 'planned') ? (defDay.planned || {}) : (defDay.actual || {});
+            const defVal = isMilesField ? normalizeNumberForCompare(defSection[field]) : normalizeForCompare(defSection[field]);
+
+            const sameAsDefault = (incoming === defVal);
+
+            if(!OVERRIDES || typeof OVERRIDES !== 'object') OVERRIDES = {};
+            if(!OVERRIDES[isoDate]) OVERRIDES[isoDate] = {};
+            if(!OVERRIDES[isoDate][section]) OVERRIDES[isoDate][section] = {};
+
+            if(sameAsDefault){
+                delete OVERRIDES[isoDate][section][field];
+            } else {
+                // store numbers as numbers for miles, else strings
+                if(isMilesField){
+                    if(incoming === ''){
+                        OVERRIDES[isoDate][section][field] = '';
+                    } else {
+                        OVERRIDES[isoDate][section][field] = Number(incoming);
+                    }
+                } else {
+                    OVERRIDES[isoDate][section][field] = incoming;
+                }
+            }
+
+            // Clean empty objects to keep OVERRIDES diff-only and tidy
+            if(OVERRIDES[isoDate] && OVERRIDES[isoDate][section] && Object.keys(OVERRIDES[isoDate][section]).length === 0){
+                delete OVERRIDES[isoDate][section];
+            }
+            if(OVERRIDES[isoDate] && Object.keys(OVERRIDES[isoDate]).length === 0){
+                delete OVERRIDES[isoDate];
+            }
+
+            saveEdits(PLAN_OVERRIDES_STORAGE_KEY, OVERRIDES);
+
+            // Rebuild legacy views so the rest of the dashboard stays consistent in v52.
+            rebuildLegacyEditsFromEffective();
+
+            // Ensure legacy 'runs' cache stays in sync with Plan Table edits
+            if(window.refreshRunsFromEffectiveDays) window.refreshRunsFromEffectiveDays();
+
+            // Keep existing behavior, but in v53 the charts read from EFFECTIVE_DAYS.
+            if(window.updatePlannedSeriesFromEdits) window.updatePlannedSeriesFromEdits();
+            if(window.updateTopStats) window.updateTopStats();
+            if(section === 'actual' && window.recomputeAll) window.recomputeAll();
+        }
+
+        function migrateLegacyEditsToOverridesIfNeeded(){
+            // Migration: If OVERRIDES is empty, we can convert any pre-v52 saved plan edits into diff-only OVERRIDES.
+            // This does NOT overwrite existing OVERRIDES.
+            try{
+                const hasOverrides = OVERRIDES && typeof OVERRIDES === 'object' && Object.keys(OVERRIDES).length > 0;
+                if(hasOverrides) return;
+
+                const legacyPlanned = loadEdits(LEGACY_PLAN_PLANNED_STORAGE_KEY);
+                const legacyActual  = loadEdits(LEGACY_PLAN_ACTUAL_STORAGE_KEY);
+
+                const hasLegacy = (legacyPlanned && Object.keys(legacyPlanned).length) || (legacyActual && Object.keys(legacyActual).length);
+                if(!hasLegacy) return;
+
+                OVERRIDES = {};
+
+                // planned legacy
+                for(const iso in legacyPlanned){
+                    const row = legacyPlanned[iso] || {};
+                    if(row.type !== undefined) setOverrideField(iso, 'planned', 'type', row.type);
+                    if(row.miles !== undefined) setOverrideField(iso, 'planned', 'miles', row.miles);
+                }
+
+                // actual legacy
+                for(const iso in legacyActual){
+                    const row = legacyActual[iso] || {};
+                    if(row.type !== undefined) setOverrideField(iso, 'actual', 'type', row.type);
+                    if(row.miles !== undefined) setOverrideField(iso, 'actual', 'miles', row.miles);
+                    if(row.pace !== undefined) setOverrideField(iso, 'actual', 'pace', row.pace);
+                    if(row.hr !== undefined) setOverrideField(iso, 'actual', 'hr', row.hr);
+                    if(row.weather !== undefined) setOverrideField(iso, 'actual', 'weather', row.weather);
+                    if(row.notes !== undefined) setOverrideField(iso, 'actual', 'notes', row.notes);
+                }
+
+                // setOverrideField already saved + rebuilt, but ensure OVERRIDES is persisted even if all diffs match defaults
+                saveEdits(PLAN_OVERRIDES_STORAGE_KEY, OVERRIDES);
+            }catch(e){}
+        }
+
+        function toISODateLocal(d){
+            const y = d.getFullYear();
+            const m = String(d.getMonth()+1).padStart(2,'0');
+            const day = String(d.getDate()).padStart(2,'0');
+            return `${y}-${m}-${day}`;
+        }
+
+        function getField(store, isoDate, field){
+            if(!isoDate) return '';
+            const row = store[isoDate];
+            if(!row) return '';
+            const v = row[field];
+            return (v === 0 || v) ? String(v) : '';
+        }
+
+        // Initialize day data (migrate legacy once, then build legacy views)
+        migrateLegacyEditsToOverridesIfNeeded();
+        rebuildLegacyEditsFromEffective();
+
+        function computeWeekPlannedMiles(week){
+            let sum = 0;
+            let any = false;
+            const start = weekStartDate(week);
+
+            for(let i=0;i<7;i++){
+                if(week===1 && i<=2) continue; // Week 1 Mon-Wed are outside the plan window
+                const d = addDays(start, i);
+                const iso = toISODateLocal(d);
+                const eff = getEffectiveDay(iso);
+                const v = eff?.planned?.miles;
+                const num = Number(v);
+                if(isFinite(num)){
+                    sum += num;
+                    any = true;
+                }
+            }
+            return any ? sum : null;
+        }
+
+        function updateWeekTotalCell(week){
+            const el = document.getElementById(`planWeekTotal_${week}`);
+            if(!el) return;
+            const total = computeWeekPlannedMiles(week);
+            el.textContent = (total==null) ? '—' : total.toFixed(2);
+        }
+
+        function renderPlanTable(){
+            const table = document.getElementById('planTable');
+            if(!table) return;
+            const tbody = table.querySelector('tbody');
+            if(!tbody) return;
+            tbody.innerHTML = '';
+
+            const dayOrder = ['MON','TUE','WED','THU','FRI','SAT','SUN'];
+            const typeOptions = ['', 'easy', 'long', 'tempo', 'interval', 'recovery', 'race'];
+
+            for(let w=1; w<=47; w++){
+                const detail = weekDetails[w];
+                const workouts = detail?.workouts ?? dayOrder.map(d => ({day:d, detail:'—'}));
+
+                workouts.forEach((x, i)=>{
+                    const dayIndex = dayOrder.indexOf(x.day);
+                    let compactDayDate = '—';
+                    let isoDate = '';
+                    if(dayIndex >= 0){
+                        if(!(w===1 && dayIndex <= 2)){
+                            const d = addDays(weekStartDate(w), dayIndex);
+                            const dateLabel = d.toLocaleDateString(undefined, {month:'numeric', day:'numeric', year:'2-digit'});
+                            compactDayDate = x.day.charAt(0) + x.day.slice(1).toLowerCase() + ' ' + dateLabel;
+                            isoDate = toISODateLocal(d);
+                        }
+                    }
+
+                    const tr = document.createElement('tr');
+                    tr.style.borderBottom = '1px solid #f0f0f0';
+
+
+                    // V3: visually emphasize the start of each week (first enabled day row)
+                    if(isoDate && ((w !== 1 && dayIndex === 0) || (w === 1 && dayIndex === 3))){
+                        tr.classList.add('weekStart');
+                    }
+                    const eff = isoDate ? getEffectiveDay(isoDate) : {planned:{}, actual:{}};
+
+                    const plannedTypeVal = normalizeTypeKey(eff?.planned?.type) || '';
+                    const plannedMilesVal = (eff?.planned?.miles === 0 || eff?.planned?.miles) ? String(eff.planned.miles) : '';
+
+                    const actualTypeVal = normalizeTypeKey(eff?.actual?.type);
+                    const actualMilesVal = (eff?.actual?.miles === 0 || eff?.actual?.miles) ? String(eff.actual.miles) : '';
+                    const actualPaceVal = normalizeForCompare(eff?.actual?.pace);
+                    const actualHrVal = normalizeForCompare(eff?.actual?.hr);
+                    const actualWeatherVal = normalizeForCompare(eff?.actual?.weather);
+                    const actualNotesVal = normalizeForCompare(eff?.actual?.notes);
+
+                    const weekTotal = (i===0) ? computeWeekPlannedMiles(w) : null;
+                    const weekTotalCell = (i===0)
+                        ? `<td id="planWeekTotal_${w}" style="padding:6px 8px; vertical-align: top; color:#666;">${weekTotal==null ? '—' : weekTotal.toFixed(2)}</td>`
+                        : `<td style="padding:6px 8px; vertical-align: top; color:#666;"></td>`;
+
+                    const plannedOpts = typeOptions.map(t=>{
+                        const label = t ? (t.charAt(0).toUpperCase()+t.slice(1)) : '—';
+                        const sel = (t === plannedTypeVal) ? 'selected' : '';
+                        return `<option value="${t}" ${sel}>${label}</option>`;
+                    }).join('');
+
+                    const actualOpts = typeOptions.map(t=>{
+                        const label = t ? (t.charAt(0).toUpperCase()+t.slice(1)) : '—';
+                        const sel = (t === actualTypeVal) ? 'selected' : '';
+                        return `<option value="${t}" ${sel}>${label}</option>`;
+                    }).join('');
+
+                    const disabledAttr = isoDate ? '' : 'disabled';
+
+                    const hasOverride = !!(isoDate && OVERRIDES && OVERRIDES[isoDate] && Object.keys(OVERRIDES[isoDate]).length);
+
+
+
+                    // Dataset tags for quick navigation / filtering
+                    tr.dataset.iso = isoDate || '';
+                    tr.dataset.week = String(w);
+                    tr.dataset.hasOverride = hasOverride ? '1' : '0';
+                    tr.innerHTML = `
+                        <td class=\"weekCell\" style=\"padding:6px 8px; vertical-align: top; color:#333;\">${i===0 ? `<strong>${w}</strong>` : ''}</td>
+                        ${weekTotalCell}
+                        <td style="padding:6px 8px; vertical-align: top; color:#333;">${hasOverride ? '<span class=\"override-indicator\" title=\"Overridden vs default\"></span>' : ''}${compactDayDate}</td>
+
+                        <td style="padding:6px 8px; vertical-align: top;">
+                            <select class="planTypeSelect" data-iso="${isoDate}"
+                                style="width:140px; padding:4px 6px; font-size:12px; border-radius:10px; border:1px solid #ddd; background:#fff; width:110px;" ${disabledAttr}>
+                                ${plannedOpts}
+                            </select>
+                        </td>
+                        <td style="padding:6px 8px; vertical-align: top;">
+                            <input class="planMilesInput" data-week="${w}" data-iso="${isoDate}" type="text" step="0.01" min="0" value="${plannedMilesVal}" placeholder="miles" style="width:110px; padding:4px 6px; font-size:12px; border-radius:10px; border:1px solid #ddd;" ${disabledAttr}>
+                        </td>
+
+                        <td style="padding:6px 8px; vertical-align: top;">
+                            <select class="actualTypeSelect" data-iso="${isoDate}"
+                                style="width:140px; padding:4px 6px; font-size:12px; border-radius:10px; border:1px solid #ddd; background:#fff; width:110px;" ${disabledAttr}>
+                                ${actualOpts}
+                            </select>
+                        </td>
+                        <td style="padding:6px 8px; vertical-align: top;">
+                            <input class="actualMilesInput" data-iso="${isoDate}" type="text" step="0.01" min="0" value="${actualMilesVal}" placeholder="miles" style="width:110px; padding:4px 6px; font-size:12px; border-radius:10px; border:1px solid #ddd;" ${disabledAttr}>
+                        </td>
+                        <td style="padding:6px 8px; vertical-align: top;">
+                            <input class="actualPaceInput" data-iso="${isoDate}" type="text" value="${actualPaceVal}"
+                                placeholder="mm:ss" style="width:110px; padding:4px 6px; font-size:12px; border-radius:10px; border:1px solid #ddd;" ${disabledAttr}>
+                        </td>
+                        <td style="padding:6px 8px; vertical-align: top;">
+                            <input class="actualHrInput" data-iso="${isoDate}" type="text" step="1" min="0" value="${actualHrVal}" placeholder="Avg HR" style="width:90px; padding:4px 6px; font-size:12px; border-radius:10px; border:1px solid #ddd;" ${disabledAttr}>
+                        </td>
+                        <td style="padding:6px 8px; vertical-align: top;">
+                            <input class="actualWeatherInput" data-iso="${isoDate}" type="text" value="${actualWeatherVal}"
+                                placeholder="e.g., 40°F" style="width:110px; padding:4px 6px; font-size:12px; border-radius:10px; border:1px solid #ddd;" ${disabledAttr}>
+                        </td>
+
+                        <td style="padding:6px 8px; vertical-align: top;">
+                            <input class="actualNotesInput" data-iso="${isoDate}" type="text" value="${actualNotesVal}" placeholder="notes"
+                                style="width:160px; padding:4px 6px; font-size:12px; border-radius:6px; border:1px solid #ddd;" ${disabledAttr}>
+                        </td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+
+                updateWeekTotalCell(w);
+            }
+
+            // Planned listeners (diff-only OVERRIDES)
+            tbody.querySelectorAll('select.planTypeSelect').forEach(sel=>{
+                sel.addEventListener('change', ()=>{
+                    const iso = sel.getAttribute('data-iso');
+                    setOverrideField(iso, 'planned', 'type', sel.value);
+                });
+            });
+            tbody.querySelectorAll('input.planMilesInput').forEach(inp=>{
+                inp.addEventListener('input', ()=>{
+                    const iso = inp.getAttribute('data-iso');
+                    const wk = parseInt(inp.getAttribute('data-week'), 10);
+                    setOverrideField(iso, 'planned', 'miles', inp.value);
+                    updateWeekTotalCell(wk);
+                });
+            });
+
+            // Actual listeners (diff-only OVERRIDES)
+            tbody.querySelectorAll('select.actualTypeSelect').forEach(sel=>{
+                sel.addEventListener('change', ()=>{
+                    const iso = sel.getAttribute('data-iso');
+                    setOverrideField(iso, 'actual', 'type', sel.value);
+                });
+            });
+            tbody.querySelectorAll('input.actualMilesInput').forEach(inp=>{
+                inp.addEventListener('input', ()=>{
+                    const iso = inp.getAttribute('data-iso');
+                    setOverrideField(iso, 'actual', 'miles', inp.value);
+                });
+            });
+            tbody.querySelectorAll('input.actualPaceInput').forEach(inp=>{
+                inp.addEventListener('input', ()=>{
+                    const iso = inp.getAttribute('data-iso');
+                    setOverrideField(iso, 'actual', 'pace', inp.value);
+                });
+            });
+            tbody.querySelectorAll('input.actualHrInput').forEach(inp=>{
+                inp.addEventListener('input', ()=>{
+                    const iso = inp.getAttribute('data-iso');
+                    setOverrideField(iso, 'actual', 'hr', inp.value);
+                });
+            });
+            tbody.querySelectorAll('input.actualWeatherInput').forEach(inp=>{
+                inp.addEventListener('input', ()=>{
+                    const iso = inp.getAttribute('data-iso');
+                    setOverrideField(iso, 'actual', 'weather', inp.value);
+                });
+            });
+            tbody.querySelectorAll('input.actualNotesInput').forEach(inp=>{
+                inp.addEventListener('input', ()=>{
+                    const iso = inp.getAttribute('data-iso');
+                    setOverrideField(iso, 'actual', 'notes', inp.value);
+                });
+            });
+        }
+
+
+        // ----------------------------
+        // Upcoming Schedule (month view)
+        // - Month dropdown (month-only)
+        // - Resolves selected month to next occurrence relative to As-of month/year
+        // - Uses Plan Table source-of-truth via getEffectiveDay()
+        // - Shows only days with planned miles > 0
+        // ----------------------------
+        function resolveMonthYearFromAsOf(selectedMonthIdx){
+            const asOf = getEffectiveToday();
+            const y = asOf.getFullYear();
+            const m = asOf.getMonth();
+            return (selectedMonthIdx < m) ? (y + 1) : y;
+        }
+
+        function planWeekForDate(d){
+            const thisMon = startOfWeekMonday(d);
+            const planMon = startOfWeekMonday(planStart);
+            const diffDays = Math.floor((thisMon - planMon) / (1000*60*60*24));
+            const w = Math.floor(diffDays / 7) + 1;
+            return clampWeek(w);
+        }
+
+        function getTypeClass(typeStr){
+            const t = (typeStr || '').toLowerCase();
+            if(t.includes('easy')) return 'easy';
+            if(t.includes('long')) return 'long';
+            if(t.includes('tempo')) return 'tempo';
+            if(t.includes('interval')) return 'interval';
+            if(t.includes('recovery')) return 'recovery';
+            if(t.includes('race')) return 'race';
+            return '';
+        }
+
+        function renderUpcomingSchedule(){
+            const monthSel = document.getElementById('scheduleMonthSelect');
+            const container = document.getElementById('scheduleWeeksContainer');
+            const totalEl = document.getElementById('scheduleMonthTotal');
+            const labelEl = document.getElementById('scheduleMonthLabel');
+            if(!monthSel || !container) return;
+
+            const monthIdx = parseInt(monthSel.value, 10);
+            const year = resolveMonthYearFromAsOf(monthIdx);
+
+            const monthStart = new Date(year, monthIdx, 1, 12, 0, 0, 0);
+            const monthEnd = new Date(year, monthIdx + 1, 0, 12, 0, 0, 0);
+
+            const monthLabel = monthStart.toLocaleDateString(undefined, { month:'long', year:'numeric' });
+            if(labelEl) labelEl.textContent = `(${monthLabel})`;
+
+            // Collect weeks that have at least one planned-mile day within the selected month
+            const weeksSet = new Set();
+            const keys = Object.keys(DEFAULT_DAYS || {});
+            for(const iso of keys){
+                const d = new Date(iso + 'T12:00:00');
+                if(d < monthStart || d > monthEnd) continue;
+
+                const eff = getEffectiveDay(iso);
+                const miles = Number(eff?.planned?.miles || 0);
+                if(!(miles > 0)) continue;
+
+                const w = planWeekForDate(d);
+                weeksSet.add(w);
+            }
+
+            const weeks = Array.from(weeksSet).sort((a,b)=>a-b);
+            container.innerHTML = '';
+
+            let monthTotal = 0;
+
+            if(weeks.length === 0){
+                container.innerHTML = `<div style="color:#666; padding: 8px 2px;">No planned runs with mileage for ${monthLabel}.</div>`;
+                if(totalEl) totalEl.textContent = '0.0';
+                return;
+            }
+
+            for(const w of weeks){
+                const start = weekStartDate(w); // Monday
+                start.setHours(12,0,0,0);
+                const end = new Date(start);
+                end.setDate(end.getDate() + 6);
+                end.setHours(12,0,0,0);
+
+                // Week header strings
+                const startStr = formatDisplayDate(start);
+                const endStr = formatDisplayDate(end);
+
+                // Calculate week total for days shown (within selected month, miles > 0)
+                let weekTotal = 0;
+                for(let i=0;i<7;i++){
+                    const day = new Date(start);
+                    day.setDate(start.getDate() + i);
+                    day.setHours(12,0,0,0);
+                    if(day.getFullYear() !== year || day.getMonth() !== monthIdx) continue;
+
+                    const iso = toISODateLocal(day);
+                    const eff = getEffectiveDay(iso);
+                    const miles = Number(eff?.planned?.miles || 0);
+                    if(miles > 0) weekTotal += miles;
+                }
+                monthTotal += weekTotal;
+
+                const card = document.createElement('div');
+                card.className = 'week-card';
+
+                const header = document.createElement('div');
+                header.className = 'week-card-header';
+
+                const left = document.createElement('div');
+                left.className = 'left';
+                left.textContent = `Week ${w} (${startStr} - ${endStr})`;
+
+                const right = document.createElement('div');
+                right.className = 'right';
+                right.textContent = `${weekTotal.toFixed(1)} miles`;
+
+                header.appendChild(left);
+                header.appendChild(right);
+
+                const grid = document.createElement('div');
+                grid.className = 'workout-grid weekly';
+
+                const dayOrder = ['MON','TUE','WED','THU','FRI','SAT','SUN'];
+                for(let i=0;i<7;i++){
+                    const dayDate = new Date(start);
+                    dayDate.setDate(start.getDate() + i);
+                    dayDate.setHours(12,0,0,0);
+
+                    const tile = document.createElement('div');
+                    tile.className = 'workout-item';
+
+                    const dow = document.createElement('div');
+                    dow.className = 'dow';
+                    dow.textContent = dayOrder[i];
+
+                    const detail = document.createElement('div');
+                    detail.className = 'detail';
+
+                    // Only show planned mileage entries (miles > 0). Otherwise leave blank.
+                    if(dayDate.getFullYear() === year && dayDate.getMonth() === monthIdx){
+                        const iso = toISODateLocal(dayDate);
+                        const eff = getEffectiveDay(iso);
+                        const miles = Number(eff?.planned?.miles || 0);
+                        const type = (eff?.planned?.type || '').toString();
+
+                        if(miles > 0){
+                            const cls = getTypeClass(type);
+                            if(cls) tile.classList.add(cls);
+
+                            const typeLower = type ? type.toLowerCase() : '';
+                            detail.textContent = `${miles} mi${typeLower ? ' ' + typeLower : ''}`;
+                        } else {
+                            detail.textContent = '';
+                        }
+                    } else {
+                        detail.textContent = '';
+                    }
+
+                    tile.appendChild(dow);
+                    tile.appendChild(detail);
+                    grid.appendChild(tile);
+                }
+
+                card.appendChild(header);
+                card.appendChild(grid);
+                container.appendChild(card);
+            }
+
+            if(totalEl) totalEl.textContent = monthTotal.toFixed(1);
+        }
+
+
+        // Initial render (planned + actual editable)
+        renderPlanTable();
+
+
+// ----------------------------
+        // Charts
+        // ----------------------------
+        const colors = {easy:'#4299e1',tempo:'#f6ad55',long:'#fc8181',recovery:'#9b7edb',interval:'#2f855a',race:'#1a202c'};
+
+        const pointStyleByType = {
+            easy:'circle',
+            recovery:'rectRot',
+            long:'triangle',
+            tempo:'rect',
+            interval:'star',
+            race:'crossRot'
+        };
+
+        const pointRadiusByType = {
+            easy:5,
+            recovery:5,
+            long:7,
+            tempo:7,
+            interval:7,
+            race:7
+        };
+
+        function hexToRgba(hex, alpha){
+            const h = hex.replace('#','');
+            const bigint = parseInt(h.length===3 ? h.split('').map(c=>c+c).join('') : h, 16);
+            const r = (bigint >> 16) & 255;
+            const g = (bigint >> 8) & 255;
+            const b = bigint & 255;
+            return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+        }
+
+        // ----------------------------
+        // v57: Plan Table shows override indicator (blue dot in date cell). Strength/Cross removed from chart type mapping.
+        // v53: Runs are derived from EFFECTIVE_DAYS (Plan Table actuals)
+        // ----------------------------
+        function mapTypeToChartKey(typeKey){
+            // Chart series keys match `colors`. Keep distinct types when possible.
+            return typeKey;
+        }
+
+        function buildRunsFromEffectiveDays(){
+            const out = [];
+            const allIsos = new Set();
+            try{
+                Object.keys(DEFAULT_DAYS || {}).forEach(k=>allIsos.add(k));
+                if(OVERRIDES && typeof OVERRIDES === 'object'){
+                    Object.keys(OVERRIDES).forEach(k=>allIsos.add(k));
+                }
+            }catch(e){}
+
+            const msPerDay = 1000*60*60*24;
+
+            allIsos.forEach((iso)=>{
+                const eff = getEffectiveDay(iso);
+                const milesNum = Number(eff?.actual?.miles);
+                if(!(isFinite(milesNum) && milesNum > 0)) return;
+
+                const rawType = normalizeTypeKey(eff?.actual?.type || eff?.planned?.type);
+                const t = mapTypeToChartKey(rawType);
+                if(!colors[t]) return; // only plot run-like types
+
+                const d = new Date(iso + 'T12:00:00');
+                const diffDays = Math.floor((d - planStart) / msPerDay);
+                const week = clampWeek(Math.floor(diffDays/7) + 1);
+
+                const paceStr = String(eff?.actual?.pace ?? '').trim() || '-';
+                const paceNum = parsePaceToNumber(paceStr === '-' ? '' : paceStr);
+
+                const hrRaw = eff?.actual?.hr;
+                const hr = (hrRaw === 0 || hrRaw) ? parseInt(String(hrRaw), 10) : null;
+
+                const temp = String(eff?.actual?.weather ?? '').trim() || '-';
+                const notes = String(eff?.actual?.notes ?? '').trim();
+
+                out.push({
+                    week,
+                    isoDate: iso,
+                    miles: milesNum,
+                    pace: paceStr,
+                    hr,
+                    type: t,
+                    temp,
+                    notes,
+                    dateObj: d,
+                    displayDate: formatDisplayDate(d),
+                    paceNum,
+                    _id: `day_${iso}_${t}_${milesNum}`
+                });
+            });
+
+            // Legacy add-run form support:
+            // If a legacy saved run exists for a date with no actual miles in EFFECTIVE_DAYS,
+            // include it (so the UI doesn't "lose" those entries).
+            (userRuns || []).forEach((r, idx)=>{
+                if(!r || !r.isoDate) return;
+
+                const eff = getEffectiveDay(r.isoDate);
+                const effMiles = Number(eff?.actual?.miles);
+                if(isFinite(effMiles) && effMiles > 0) return; // Plan Table wins
+
+                const rawType = normalizeTypeKey(r.type);
+                const t = mapTypeToChartKey(rawType);
+                if(!colors[t]) return;
+
+                const d = new Date(r.isoDate + 'T12:00:00');
+                const diffDays = Math.floor((d - planStart) / msPerDay);
+                const week = clampWeek(Math.floor(diffDays/7) + 1);
+
+                out.push({
+                    ...r,
+                    week,
+                    type: t,
+                    dateObj: d,
+                    displayDate: formatDisplayDate(d),
+                    paceNum: parsePaceToNumber(r.pace),
+                    _id: r._id ?? `legacy_${idx}_${r.isoDate}_${t}_${r.miles}`
+                });
+            });
+
+            out.sort((a,b)=>a.dateObj-b.dateObj);
+            return out;
+        }
+
+        function refreshRunsFromEffectiveDays(){
+            runs = buildRunsFromEffectiveDays();
+            return runs;
+        }
+
+        function computeActualWeeklyMileage(runsArr){
+            // v67: Actual weekly series is derived from EFFECTIVE_DAYS (Plan Table) as a literal weekly sum.
+            // No As-of clipping: treat As-of end as far-future.
+            const asOfEnd = new Date(8640000000000000); // max valid JS date
+
+const out = Array(weeks.length).fill(null);
+
+            for(let w = 1; w <= weeks.length; w++){
+                const bounds = computeWeekBounds(w);
+                if(bounds.start > asOfEnd){
+                    out[w-1] = null;
+                    continue;
+                }
+
+                let sum = 0;
+                let any = false;
+
+                for(let i=0; i<7; i++){
+                    if(w===1 && i<=2) continue; // Week 1 Mon-Wed are outside the plan window
+                    const d = addDays(weekStartDate(w), i);
+                    d.setHours(12,0,0,0);
+
+                    if(d > asOfEnd) continue;
+
+                    const iso = toISODateLocal(d);
+                    const eff = getEffectiveDay(iso);
+                    const num = Number(eff?.actual?.miles);
+
+                    if(isFinite(num) && num > 0){
+                        sum += num;
+                        any = true;
+                    }
+                }
+
+                out[w-1] = any ? (Math.round(sum * 100) / 100) : null;
+            }
+
+            return out;
+        }
+
+        function computePlannedWeeklyMileageFromEdits(){
+            // v53: Planned weekly series is derived from EFFECTIVE_DAYS (Plan Table).
+            const out = Array(weeks.length).fill(null);
+
+            for(let w = 1; w <= weeks.length; w++){
+                let sum = 0;
+                let any = false;
+
+                for(let i=0; i<7; i++){
+                    if(w===1 && i<=2) continue; // Week 1 Mon-Wed are outside the plan window
+                    const d = addDays(weekStartDate(w), i);
+                    const iso = toISODateLocal(d);
+                    const eff = getEffectiveDay(iso);
+                    const num = Number(eff?.planned?.miles);
+
+                    if(isFinite(num)){
+                        sum += num;
+                        any = true;
+                    }
+                }
+
+                out[w-1] = any ? (Math.round(sum * 100) / 100) : plannedMileage[w-1];
+            }
+
+            return out;
+        }
+
+        // --- Main chart datasets (beeswarm/dodge within week for duplicates + stable tooltips) ---
+        function makeLinePoints(arr){
+            return arr.map((y,i)=>({x:i+1,y:y}));
+        }
+
+        // Build horizontal offsets so runs with the same (week, miles) don't overlap.
+        // Offsets are centered around the week number (e.g., 3 ± 0.14).
+        function buildBeeswarmOffsets(runsArr, step=0.14, cap=0.34){
+            const groups = new Map();
+            runsArr.forEach(r=>{
+                const key = `${r.week}|${r.miles.toFixed(2)}`;
+                if(!groups.has(key)) groups.set(key, []);
+                groups.get(key).push(r._id);
+            });
+
+
+        
+            const offsetById = new Map();
+            groups.forEach((ids)=>{
+                const n = ids.length;
+                if(n<=1){
+                    offsetById.set(ids[0], 0);
+                    return;
+                }
+                const maxSpread = Math.min(cap, step * ((n-1)/2));
+                const actualStep = (n>1) ? (2*maxSpread)/(n-1) : 0;
+
+                ids.forEach((id,i)=>{
+                    const off = -maxSpread + actualStep*i;
+                    offsetById.set(id, off);
+                });
+            });
+            return offsetById;
+        }
+
+        function computeRunPointSeries(runsArr){
+    // Return individual run points (no aggregation). Duplicate runs at same week+miles
+    // will overlay and appear darker via opacity.
+    const offsets = buildBeeswarmOffsets(runsArr);
+    const out = {};
+    Object.keys(colors).forEach(t=> out[t]=[]);
+    runsArr.forEach(r=>{
+        if(!out[r.type]) out[r.type]=[];
+        const xOffset = offsets.get(r._id) || 0;
+        out[r.type].push({
+            x: r.week + xOffset,
+            y: r.miles,
+            _runId: r._id
+        });
+    });
+    // Stable ordering: week then miles
+    Object.keys(out).forEach(t=>{
+        out[t].sort((a,b)=> (a.x-b.x) || (a.y-b.y));
+    });
+    return out;
+}
+
+refreshRunsFromEffectiveDays();
+
+const initialRunSeries = computeRunPointSeries(runs);
+
+        let effectivePlannedMileage = computePlannedWeeklyMileageFromEdits();
+
+        const mainChart = new Chart(document.getElementById('mainChart'),{
+            type:'line',
+            data:{
+                datasets:[
+                    {
+                        label:'Planned Weekly Mileage',
+                        data: makeLinePoints(effectivePlannedMileage),
+                        borderColor:'rgba(150,150,150,0.5)',
+                                                pointBackgroundColor:'rgba(150,150,150,0.85)',
+                        pointBorderColor:'rgba(255,255,255,0.95)',
+                        pointBorderWidth:1,
+backgroundColor:'rgba(200,200,200,0.2)',
+                        fill:true,
+                        tension:0.4,
+                        pointRadius:5,
+                        pointHoverRadius:8,
+                        pointHitRadius:18
+                    },
+                    {
+                        label:'Actual Weekly Mileage',
+                        data: makeLinePoints(computeActualWeeklyMileage(runs)),
+                        borderColor:'#10b981',
+                        backgroundColor:'rgba(16,185,129,0.1)',
+                        fill:false,
+                        tension:0.4,
+                        borderWidth:3,
+                        pointRadius:5,
+                        pointBackgroundColor:'#10b981',
+                        pointBorderColor:'white',
+                        pointBorderWidth:2
+                    },
+                    ...Object.keys(colors).map(type=>({
+                        label:type.charAt(0).toUpperCase()+type.slice(1),
+                        data: initialRunSeries[type],
+                        backgroundColor: hexToRgba(colors[type], 0.65),
+                        borderColor:hexToRgba(colors[type], 0.95),
+                        borderWidth: 1,
+                        pointRadius: ((type||'').toLowerCase()==='tempo') ? 14 : (((type||'').toLowerCase()==='easy' || (type||'').toLowerCase()==='recovery') ? 5 : 7),
+                        pointHoverRadius: ((type||'').toLowerCase()==='tempo') ? 18 : 9,
+                        pointStyle: (pointStyleByType[(type||'').toLowerCase()] || 'circle'),
+                        showLine:false
+                    }))
+                ]
+            },
+            options:{
+                responsive:true,
+                maintainAspectRatio:false,
+                plugins:{
+                    legend:{display:true,position:'top',labels:{usePointStyle:true}},
+                    tooltip:{
+                        callbacks:{
+                            title: function(context){
+                                const ctx0 = context?.[0];
+                                if(!ctx0) return '';
+                                // For run points, use the run's week.
+                                if(ctx0.datasetIndex>=2){
+                                    const pt = ctx0.dataset.data[ctx0.dataIndex];
+                                    const run = runs.find(r=>r._id===pt._runId);
+                                    const wk = run ? run.week : Math.round(ctx0.parsed.x);
+                                    return `Week ${wk} (${weekDateRange(wk)})`;
+                                }
+                                const wk = Math.round(ctx0.parsed.x);
+                                return `Week ${wk} (${weekDateRange(wk)})`;
+                            },
+                            label:function(context){
+                                if(context.datasetIndex===0) return 'Planned: '+context.parsed.y+' miles';
+                                if(context.datasetIndex===1) return 'Actual: '+context.parsed.y+' miles';
+
+                                const wk = Math.round(context.parsed.x);
+                                const miles = context.parsed.y;
+// For individual run points
+const pt = context.dataset.data[context.dataIndex];
+const run = runs.find(r=>r._id===pt._runId);
+if(run){
+    const parts = [run.displayDate, `${run.miles.toFixed(2)} mi`, `${run.pace} pace`];
+    if(run.hr != null) parts.push(`${run.hr} bpm`);
+    if(run.temp) parts.push(run.temp);
+    return parts.join(' • ');
+}
+return context.dataset.label+': '+context.parsed.y.toFixed(2)+' miles';
+                            }
+                        }
+                    }
+                },
+                scales:{
+                    x:{
+                        type:'linear',
+                        min:0,
+                        max:48,
+                        title:{display:true,text:'Week'},
+                        grid:{color:'#f0f0f0'},
+                        ticks:{stepSize:1, callback:(v)=> (v===0||v===48)?'':(v>=1 && v<=47 ? v : '')}
+                    },
+                    y:{title:{display:true,text:'Miles'},grid:{color:'#f0f0f0'},beginAtZero:true}
+                }
+            }
+        });
+
+        // --- Create bottom 3 charts (pie, pace, hr) with shared date-range filtering ---
+        const pieChart = new Chart(document.getElementById('pieChart'),{
+            type:'doughnut',
+            data:{labels:[],datasets:[{data:[],backgroundColor:[],borderWidth:1,borderColor:'white'}]},
+            options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom'}}}
+        });
+
+
+        function updatePlannedSeriesFromEdits(){
+            effectivePlannedMileage = computePlannedWeeklyMileageFromEdits();
+            mainChart.data.datasets[0].data = makeLinePoints(effectivePlannedMileage);
+            mainChart.update();
+        }
+        window.updatePlannedSeriesFromEdits = updatePlannedSeriesFromEdits;
+
+        const paceChart = new Chart(document.getElementById('paceChart'),{
+            type:'line',
+            data:{labels:[],datasets:[{label:'Avg Pace',data:[],borderColor:'rgba(150,150,150,0.85)',backgroundColor:'rgba(150,150,150,0.15)',tension:0.4,fill:true,pointRadius:7,
+                pointStyle:(ctx)=>{
+                    const r = window.__filteredRuns?.[ctx.dataIndex];
+                    if(!r) return 'circle';
+                    if(r.type==='tempo') return 'triangle';
+                    if(r.type==='long') return 'rect';
+                    if(r.type==='recovery') return 'rectRot';
+                    return 'circle';
+                },
+                pointBackgroundColor:(ctx)=>{
+                    const r = window.__filteredRuns?.[ctx.dataIndex];
+                    if(!r) return '#667eea';
+                    return colors[r.type] || '#667eea';
+                },
+                pointBorderColor:'white',pointBorderWidth:2}]},
+            options:{
+                responsive:true,
+                maintainAspectRatio:false,
+                plugins:{
+                    legend:{display:false},
+                    tooltip:{callbacks:{label:function(context){
+                        const run = window.__filteredRuns?.[context.dataIndex];
+                        if(!run) return '';
+                        return [run.displayDate, `${run.miles.toFixed(2)} miles`, `${run.pace} pace`, `${run.hr ?? '-'} bpm`];
+                    }}}
+                },
+                scales:{x:{grid:{color:'#f0f0f0'}},y:{title:{display:true,text:'Pace (min/mile)'},reverse:false,ticks:{callback:function(v){const mins=Math.floor(v);let secs=Math.round((v-mins)*60);if(secs===60){mins+=1;secs=0;}return mins+':' + String(secs).padStart(2,'0');}},grid:{color:'#f0f0f0'}}}
+            }
+        });
+
+        const hrChart = new Chart(document.getElementById('hrChart'),{
+            type:'scatter',
+            data:{datasets:Object.keys(colors).map(type=>({
+                label:type.charAt(0).toUpperCase()+type.slice(1),
+                data:[],
+                backgroundColor:colors[type],
+                borderColor:hexToRgba(colors[type], 0.9),
+                borderWidth:1,
+                pointRadius:8
+            }))},
+            options:{
+                responsive:true,
+                maintainAspectRatio:false,
+                plugins:{
+                    legend:{position:'top'},
+                    tooltip:{callbacks:{label:function(context){
+                        const pt = context.dataset.data[context.dataIndex];
+                        const run = window.__filteredRuns?.find(r=>r._id===pt._runId);
+                        if(run) return [run.displayDate, `${run.miles.toFixed(2)} mi`, `${run.pace} pace`, `${run.hr ?? '-'} bpm`, run.temp ?? '-'];
+                        return '';
+                    }}}
+                },
+                scales:{
+                    x:{title:{display:true,text:'Pace (min/mile)'},reverse:true,grid:{color:'#f0f0f0'}},
+                    y:{title:{display:true,text:'Heart Rate (bpm)'},grid:{color:'#f0f0f0'}}
+                }
+            }
+        });
+
+        function updateMainRunMarkers(filteredRuns){
+            // Only affects the per-run markers on the main chart (datasets index 2+).
+            // Planned and Actual weekly mileage lines remain unchanged.
+            const runSeries = computeRunPointSeries(filteredRuns);
+            const types = Object.keys(colors);
+            types.forEach((t, i)=>{
+                const dsIndex = 2 + i;
+                if(mainChart.data.datasets[dsIndex]){
+                    mainChart.data.datasets[dsIndex].data = runSeries[t];
+                }
+            });
+            mainChart.update();
+        }
+
+
+        function updateBottomCharts(filteredRuns){
+            window.__filteredRuns = filteredRuns;
+
+            // Pie
+            const runTypes = filteredRuns.reduce((acc,run)=>{acc[run.type]=(acc[run.type]||0)+1;return acc}, {});
+            pieChart.data.labels = Object.keys(runTypes).map(t=>t.charAt(0).toUpperCase()+t.slice(1));
+            pieChart.data.datasets[0].data = Object.values(runTypes);
+            pieChart.data.datasets[0].backgroundColor = Object.keys(runTypes).map(t=>colors[t] || '#999');
+            pieChart.update();
+
+            // Pace
+            paceChart.data.labels = filteredRuns.map(r=>r.displayDate);
+            paceChart.data.datasets[0].data = filteredRuns.map(r=>r.paceNum).filter(x=>x!==null);
+            paceChart.update();
+
+            // HR scatter
+            hrChart.data.datasets.forEach(ds=>{
+                const type = ds.label.toLowerCase();
+                ds.data = filteredRuns
+                    .filter(r=>r.type===type && r.paceNum!==null && r.hr!==null && r.hr!==undefined)
+                    .map(r=>({x:r.paceNum, y:r.hr, _runId:r._id}));
+            });
+            hrChart.update();
+        }
+
+        // ----------------------------
+        // Shared date-range sliders (Problem 2)
+        // ----------------------------
+        
+        // ----------------------------
+        // Date Range Filter (calendar inputs)
+        // ----------------------------
+        const rangeMode = document.getElementById('rangeMode');
+        const rangeStartDate = document.getElementById('rangeStartDate');
+        const rangeEndDate = document.getElementById('rangeEndDate');
+        const rangeLabel = document.getElementById('rangeLabel');
+
+        const quickAll = document.getElementById('quickAll');
+        const quick7 = document.getElementById('quick7');
+        const quick14 = document.getElementById('quick14');
+        const quickThisMonth = document.getElementById('quickThisMonth');
+
+
+        // ----------------------------
+        // Run Type Filter (pill toggles)
+        // ----------------------------
+        const typeButtons = [
+            document.getElementById('typeEasy'),
+            document.getElementById('typeTempo'),
+            document.getElementById('typeLong'),
+            document.getElementById('typeRecovery'),
+            document.getElementById('typeInterval'),
+            document.getElementById('typeRace')
+        ].filter(Boolean);
+
+        // Default: all selected
+        const selectedRunTypes = new Set(['easy','tempo','long','recovery','interval','race']);
+
+        function syncRunTypeButtonStyles(){
+            typeButtons.forEach(btn=>{
+                const t = btn.getAttribute('data-run-type');
+                const on = selectedRunTypes.has(t);
+                btn.style.borderColor = on ? '#667eea' : '#ddd';
+                btn.style.fontWeight = on ? '700' : '400';
+                btn.style.opacity = on ? '1' : '0.65';
+            });
+        }
+
+        function getSelectedRunTypes(){
+            // Safety: never allow "none" (reset to all)
+            if(selectedRunTypes.size === 0){
+                ['easy','tempo','long','recovery','interval','race'].forEach(t=>selectedRunTypes.add(t));
+            }
+            return selectedRunTypes;
+        }
+
+        typeButtons.forEach(btn=>{
+            btn.addEventListener('click', ()=>{
+                const t = btn.getAttribute('data-run-type');
+                if(selectedRunTypes.has(t)) selectedRunTypes.delete(t);
+                else selectedRunTypes.add(t);
+                syncRunTypeButtonStyles();
+                applyDateFilter();
+            });
+        });
+
+        // Initial style sync
+        syncRunTypeButtonStyles();
+
+        function toISODate(d){
+            const z = new Date(d.getTime() - d.getTimezoneOffset()*60000);
+            return z.toISOString().slice(0,10);
+        }
+        function addDays(d, days){
+            const x = new Date(d);
+            x.setDate(x.getDate()+days);
+            return x;
+        }
+        function startOfMonth(d){
+            return new Date(d.getFullYear(), d.getMonth(), 1);
+        }
+        function endOfMonth(d){
+            return new Date(d.getFullYear(), d.getMonth()+1, 0);
+        }
+
+        function refreshRangeControls(){
+            if(!runs.length){
+                rangeLabel.textContent = 'No runs';
+                updateBottomCharts([]);
+                return;
+            }
+            const minDate = runs[0].dateObj;
+            const maxDate = runs[runs.length-1].dateObj;
+
+            // default: all runs
+            rangeMode.value = 'custom';
+            rangeStartDate.value = toISODate(minDate);
+            rangeEndDate.value = toISODate(maxDate);
+            rangeEndDate.disabled = false;
+
+            applyDateFilter();
+        }
+
+        function applyDateFilter(){
+            if(!runs.length){
+                rangeLabel.textContent = 'No runs';
+                updateBottomCharts([]);
+                return;
+            }
+
+            let s = rangeStartDate.value ? new Date(rangeStartDate.value+'T00:00:00') : runs[0].dateObj;
+            let e = rangeEndDate.value ? new Date(rangeEndDate.value+'T23:59:59') : runs[runs.length-1].dateObj;
+
+            // Snap behavior
+            if(rangeMode.value === 'week'){
+                // Week = 7-day block starting from selected start date
+                e = new Date(addDays(s, 6).getTime() + 23*3600*1000 + 59*60*1000 + 59*1000);
+                rangeEndDate.value = toISODate(e);
+                rangeEndDate.disabled = true;
+            }else if(rangeMode.value === 'month'){
+                const sm = startOfMonth(s);
+                const em = endOfMonth(s);
+                s = new Date(sm.getFullYear(), sm.getMonth(), sm.getDate(), 0,0,0);
+                e = new Date(em.getFullYear(), em.getMonth(), em.getDate(), 23,59,59);
+                rangeStartDate.value = toISODate(s);
+                rangeEndDate.value = toISODate(e);
+                rangeEndDate.disabled = true;
+            }else{
+                rangeEndDate.disabled = false;
+                // ensure start <= end
+                if(s>e){ const tmp=s; s=e; e=tmp; rangeStartDate.value = toISODate(s); rangeEndDate.value = toISODate(e); }
+            }
+
+            const selectedTypes = getSelectedRunTypes();
+            const filtered = runs.filter(r => r.dateObj >= s && r.dateObj <= e && selectedTypes.has(r.type));
+
+            if(filtered.length){
+                rangeLabel.textContent = `${formatDisplayDate(s)} → ${formatDisplayDate(e)} (${filtered.length} run${filtered.length===1?'':'s'})`;
+            }else{
+                rangeLabel.textContent = `${formatDisplayDate(s)} → ${formatDisplayDate(e)} (0 runs)`;
+            }
+            updateBottomCharts(filtered);
+            updateMainRunMarkers(filtered);
+            renderRecentRuns(filtered);
+        }
+
+        // Quick presets
+        function getEffectiveMaxDate(){
+            // Use As-of Date if set; otherwise real today. This is the reference for quick presets.
+            return getEffectiveToday();
+        }
+
+        function setRange(sDate, eDate){
+            rangeMode.value = 'custom';
+            rangeEndDate.disabled = false;
+            rangeStartDate.value = toISODate(sDate);
+            rangeEndDate.value = toISODate(eDate);
+            applyDateFilter();
+        }
+
+        quickAll && quickAll.addEventListener('click', () => {
+            // "All" should always represent the full plan window (Jan 1, 2026 → Race Day)
+            // regardless of whether runs exist yet.
+            const fullStart = new Date('2026-01-01T00:00:00');
+            const fullEnd = new Date('2026-11-22T00:00:00');
+            setRange(fullStart, fullEnd);
+        });
+        quick7 && quick7.addEventListener('click', () => {
+            const max = getEffectiveMaxDate();
+            setRange(addDays(max, -6), max);
+        });
+        quick14 && quick14.addEventListener('click', () => {
+            const max = getEffectiveMaxDate();
+            setRange(addDays(max, -13), max);
+        });
+        quickThisMonth && quickThisMonth.addEventListener('click', () => {
+            const max = getEffectiveMaxDate();
+            const s = startOfMonth(max);
+            // As-of date acts as the range end for "This month"
+            setRange(s, max);
+        });
+
+        rangeMode && rangeMode.addEventListener('change', applyDateFilter);
+        rangeStartDate && rangeStartDate.addEventListener('change', applyDateFilter);
+        rangeEndDate && rangeEndDate.addEventListener('change', applyDateFilter);
+        
+        // ----------------------------
+        // Tabs (Dashboard / Plan Table / Upcoming Schedule)
+        // ----------------------------
+        const tabDashboardBtn = document.getElementById('tabDashboard');
+        const tabPlanBtn = document.getElementById('tabPlan');
+        const tabUpcomingBtn = document.getElementById('tabUpcomingSchedule');
+
+        const dashboardTab = document.getElementById('dashboardTab');
+        const planTab = document.getElementById('planTab');
+        const upcomingScheduleTab = document.getElementById('upcomingScheduleTab');
+
+        function setActiveTab(name){
+            const onDashboard = (name === 'dashboard');
+            const onPlan = (name === 'plan');
+            const onUpcoming = (name === 'upcoming');
+
+            if(dashboardTab) dashboardTab.style.display = onDashboard ? '' : 'none';
+            if(planTab) planTab.style.display = onPlan ? '' : 'none';
+            if(upcomingScheduleTab) upcomingScheduleTab.style.display = onUpcoming ? '' : 'none';
+
+            const runsTabSection = document.getElementById('runsTabSection');
+            if(runsTabSection) runsTabSection.style.display = onDashboard ? '' : 'none';
+
+            if(tabDashboardBtn){
+                tabDashboardBtn.style.borderColor = onDashboard ? '#667eea' : '#ddd';
+                tabDashboardBtn.style.fontWeight = onDashboard ? '700' : '400';
+                tabDashboardBtn.style.opacity = onDashboard ? '1' : '0.8';
+            }
+            if(tabPlanBtn){
+                tabPlanBtn.style.borderColor = onPlan ? '#667eea' : '#ddd';
+                tabPlanBtn.style.fontWeight = onPlan ? '700' : '400';
+                tabPlanBtn.style.opacity = onPlan ? '1' : '0.8';
+            }
+            if(tabUpcomingBtn){
+                tabUpcomingBtn.style.borderColor = onUpcoming ? '#667eea' : '#ddd';
+                tabUpcomingBtn.style.fontWeight = onUpcoming ? '700' : '400';
+                tabUpcomingBtn.style.opacity = onUpcoming ? '1' : '0.8';
+            }
+        }
+
+// Plan Table scroll persistence (v2)
+        // ----------------------------
+        const planTableWrap = document.getElementById('planTableWrap');
+        const PLAN_SCROLL_KEY_V2 = 'MD26_V2_planTableScrollTop';
+        const PLAN_SCROLL_KEY_V1 = 'MD26_V1_planTableScrollTop'; // migrate if present
+
+        function restorePlanTableScroll(){
+            if(!planTableWrap) return;
+            const raw = localStorage.getItem(PLAN_SCROLL_KEY_V2) ?? localStorage.getItem(PLAN_SCROLL_KEY_V1);
+            if(raw == null) return;
+
+            const val = Number(raw);
+            if(!isFinite(val)) return;
+
+            // Wait a tick so layout is ready (tab visibility affects scroll height)
+            requestAnimationFrame(()=>{
+                const maxScroll = Math.max(0, planTableWrap.scrollHeight - planTableWrap.clientHeight);
+                planTableWrap.scrollTop = Math.max(0, Math.min(maxScroll, val));
+            });
+        }
+
+        function attachPlanTableScrollSaver(){
+            if(!planTableWrap) return;
+            let t = null;
+            planTableWrap.addEventListener('scroll', ()=>{
+                if(t) return;
+                t = setTimeout(()=>{
+                    t = null;
+                    try{
+                        localStorage.setItem(PLAN_SCROLL_KEY_V2, String(planTableWrap.scrollTop || 0));
+                    }catch(e){
+                        // ignore storage errors (private mode / quota)
+                    }
+                }, 150);
+            }, {passive:true});
+        }
+
+        attachPlanTableScrollSaver();
+
+        tabDashboardBtn && tabDashboardBtn.addEventListener('click', ()=>setActiveTab('dashboard'));
+        tabPlanBtn && tabPlanBtn.addEventListener('click', ()=>{ setActiveTab('plan'); restorePlanTableScroll(); });
+        tabUpcomingBtn && tabUpcomingBtn.addEventListener('click', ()=>{ setActiveTab('upcoming'); renderUpcomingSchedule(); });
+
+        // Default
+        setActiveTab('dashboard');
+
+        // Upcoming Schedule init
+        const scheduleMonthSelect = document.getElementById('scheduleMonthSelect');
+        if(scheduleMonthSelect){
+            // Default to the As-of month so month-only selection is intuitive
+            scheduleMonthSelect.value = String(getEffectiveToday().getMonth());
+            scheduleMonthSelect.addEventListener('change', renderUpcomingSchedule);
+        }
+
+const asOfDate = document.getElementById('asOfDate');
+        asOfDate && asOfDate.addEventListener('change', function () {
+            // As-of date drives time-based top stats (Current Week / This Week) and countdown
+            updateCountdown();
+            updateTopStats();
+            // Ensure quick presets and range snapping reflect the selected As-of date
+            applyDateFilter();
+        });
+
+// initial render
+        refreshRangeControls();
+        applyDateFilter();
+
+        // ----------------------------
+        // Recent runs list + add run form (Problem 5)
+        // ----------------------------
+        const runsListContainer = document.querySelector('.runs-list');
+
+        function renderRecentRuns(sourceRuns){
+            const list = Array.isArray(sourceRuns) ? sourceRuns : (window.__filteredRuns || runs);
+            const runsListContainer = document.querySelector('.runs-list');
+            if(!runsListContainer) return;
+            // Remove existing run-item nodes (keep header + form)
+            const items = runsListContainer.querySelectorAll('.run-item');
+            items.forEach(n=>n.remove());
+
+            const recent = [...list].sort((a,b)=>b.dateObj-a.dateObj).slice(0, 12);
+
+            recent.forEach(run=>{
+                const div = document.createElement('div');
+                div.className = `run-item ${run.type}`;
+                div.innerHTML = `
+                    <div>
+                        <div class="run-date">${run.displayDate} - ${run.type.charAt(0).toUpperCase()+run.type.slice(1)}</div>
+                        <div class="run-stats">
+                            <span>${run.miles.toFixed(2)} mi</span>
+                            <span>${run.pace} pace</span>
+                            <span>${run.hr ?? '-'} HR</span>
+                            <span>${run.temp ?? '-'}</span>
+                        </div>
+                    </div>
+                `;
+                runsListContainer.appendChild(div);
+            });
+        }
+
+        function recomputeAll(){
+            // re-sort, recompute derived values, update charts and UI
+            refreshRunsFromEffectiveDays();
+
+            runs = runs
+                .map((r, idx)=>{
+                    const d = new Date(r.isoDate);
+                    return {
+                        ...r,
+                        dateObj: d,
+                        displayDate: formatDisplayDate(d),
+                        paceNum: parsePaceToNumber(r.pace),
+                        _id: r._id ?? `run_${idx}_${r.isoDate}_${r.type}_${r.miles}`
+                    };
+                })
+                .sort((a,b)=>a.dateObj-b.dateObj);
+
+            // Update main chart actual mileage + run points
+            mainChart.data.datasets[1].data = makeLinePoints(computeActualWeeklyMileage(runs));
+            const runSeries = computeRunPointSeries(runs);
+            // Update run scatter datasets (index 2+)
+            const types = Object.keys(colors);
+            types.forEach((t, i)=>{
+                mainChart.data.datasets[2+i].data = runSeries[t];
+            });
+            mainChart.update();
+
+            refreshRangeControls();
+            renderRecentRuns();
+            updateTopStats();
+        }
+        window.recomputeAll = recomputeAll;
+
+        renderRecentRuns();
+        updateTopStats();
+
+        const addRunForm = document.getElementById('addRunForm');
+        addRunForm.addEventListener('submit', (e)=>{
+            e.preventDefault();
+
+            const isoDate = document.getElementById('runDate').value;
+            const type = document.getElementById('runType').value;
+            const miles = parseFloat(document.getElementById('runMiles').value);
+            const pace = document.getElementById('runPace').value.trim();
+            const hrRaw = document.getElementById('runHr').value.trim();
+            const hr = hrRaw ? parseInt(hrRaw,10) : null;
+            const temp = document.getElementById('runTemp').value.trim() || '-';
+
+            const paceNum = parsePaceToNumber(pace);
+            if(!isoDate || !type || !miles || paceNum===null){
+                alert('Please enter a valid date, miles, and pace like 9:30.');
+                return;
+            }
+
+            // Derive week number from planStart
+            const d = new Date(isoDate);
+            const diffDays = Math.floor((d - planStart) / (1000*60*60*24));
+            const week = Math.max(1, Math.min(42, Math.floor(diffDays/7)+1));
+
+            const newRun = {
+                week,
+                isoDate,
+                miles,
+                pace,
+                hr,
+                type,
+                temp,
+                _id: `user_${Date.now()}_${isoDate}_${type}_${miles}`
+            };
+
+            // v53: Plan Table is the source of truth — persist this run into OVERRIDES (actual fields)
+            const typeTitle = type ? (type.charAt(0).toUpperCase()+type.slice(1)) : '';
+            setOverrideField(isoDate, 'actual', 'type', typeTitle);
+            setOverrideField(isoDate, 'actual', 'miles', miles);
+            setOverrideField(isoDate, 'actual', 'pace', pace);
+            setOverrideField(isoDate, 'actual', 'hr', hrRaw);
+            setOverrideField(isoDate, 'actual', 'weather', temp);
+            // notes left blank from this form
+
+            // Keep Plan Table view in sync if user flips tabs
+            if(typeof renderPlanTable === 'function') renderPlanTable();
+            updateWeekTotalCell(week);
+
+            userRuns.push(newRun);
+            saveRuns(userRuns);
+
+            runs.push(newRun);
+            recomputeAll();
+
+            addRunForm.reset();
+        });
+
+        document.getElementById('clearRuns').addEventListener('click', ()=>{
+            if(!confirm('Clear saved runs added via this form (defaults stay)?')) return;
+
+            // Only wipe user-entered runs saved in THIS browser
+            userRuns = [];
+            saveRuns(userRuns);
+
+            // Rebuild runs from EFFECTIVE_DAYS (Plan Table)
+            refreshRunsFromEffectiveDays();
+
+            // Update UI/charts
+            recomputeAll();
+        });
+    
+
+function downloadTextFile(filename, text, mime='text/plain'){
+    const blob = new Blob([text], {type: mime});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+}
+
+function csvEscape(v){
+    if(v==null) return '';
+    const s = String(v);
+    if(/[",\n]/.test(s)){
+        return '"' + s.replace(/"/g,'""') + '"';
+    }
+    return s;
+}
+
+function exportRunsCSV(){
+    const header = ['Date','Week','Type','Miles','Pace','HR','Temp','Notes'];
+    const rows = [header];
+    const sorted = runs.slice().sort((a,b)=> (a.dateObj? a.dateObj-b.dateObj : 0));
+    sorted.forEach(r=>{
+        rows.push([
+            r.isoDate || '',
+            r.week ?? '',
+            r.type || '',
+            r.miles ?? '',
+            r.pace || '',
+            (r.hr ?? r.heartRate ?? ''),
+            (r.temp ?? r.temperature ?? ''),
+            r.notes || ''
+        ]);
+    });
+    const csv = rows.map(row=>row.map(csvEscape).join(',')).join('\n');
+    downloadTextFile('marathon_runs.csv', csv, 'text/csv');
+}
+
+function exportWeeklySummaryCSV(){
+    const actualByWeek = computeActualWeeklyMileage(runs);
+    const header = ['Week','Date Range','Planned Miles','Actual Miles','Delta (Actual-Planned)'];
+    const rows = [header];
+    for(let wk=1; wk<=plannedMileage.length; wk++){
+        const planned = plannedMileage[wk-1] ?? '';
+        const actual = actualByWeek[wk-1] ?? 0;
+        const delta = (planned!=='' && planned!=null) ? (actual - planned) : '';
+        rows.push([wk, weekDateRange(wk), planned, actual, delta]);
+    }
+    const csv = rows.map(row=>row.map(csvEscape).join(',')).join('\n');
+    downloadTextFile('marathon_weekly_summary.csv', csv, 'text/csv');
+}
+
+
+function initPlanTableNavigation(){
+    const table = document.getElementById('planTable');
+    const wrap = document.getElementById('planTableWrap');
+
+    const weekInput = document.getElementById('planJumpWeek');
+    const weekBtn = document.getElementById('planJumpWeekBtn');
+    const dateInput = document.getElementById('planJumpDate');
+    const dateBtn = document.getElementById('planJumpDateBtn');
+    const onlyOverrides = document.getElementById('planOnlyOverrides');
+    const clearBtn = document.getElementById('planClearNavBtn');
+
+    if(!table) return;
+
+    function clearHighlights(){
+        table.querySelectorAll('tbody tr.planRowHighlight').forEach(tr=>tr.classList.remove('planRowHighlight'));
+    }
+
+    function highlightRow(tr){
+        clearHighlights();
+        tr.classList.add('planRowHighlight');
+        setTimeout(()=>tr.classList.remove('planRowHighlight'), 2500);
+    }
+
+    function scrollToRow(tr){
+        // If we have a scroll wrapper, scroll within it; otherwise fall back to scrollIntoView.
+        if(wrap){
+            const top = tr.offsetTop;
+            // small padding so the row sits below sticky header
+            wrap.scrollTop = Math.max(0, top - 40);
+        }else{
+            tr.scrollIntoView({behavior:'smooth', block:'start'});
+        }
+        highlightRow(tr);
+    }
+
+    function jumpToWeek(){
+        const wk = weekInput && weekInput.value ? String(parseInt(weekInput.value,10)) : '';
+        if(!wk) return;
+        const tr = table.querySelector(`tbody tr[data-week="${wk}"]`);
+        if(tr) scrollToRow(tr);
+    }
+
+    function jumpToDate(){
+        const iso = dateInput && dateInput.value ? dateInput.value : '';
+        if(!iso) return;
+        const tr = table.querySelector(`tbody tr[data-iso="${iso}"]`);
+        if(tr) scrollToRow(tr);
+    }
+
+    function applyOverrideFilter(){
+        if(!onlyOverrides) return;
+        const on = !!onlyOverrides.checked;
+        table.querySelectorAll('tbody tr').forEach(tr=>{
+            if(!on){
+                tr.style.display = '';
+                return;
+            }
+            tr.style.display = (tr.dataset.hasOverride === '1') ? '' : 'none';
+        });
+    }
+
+    function clearNav(){
+        if(weekInput) weekInput.value = '';
+        if(dateInput) dateInput.value = '';
+        if(onlyOverrides) onlyOverrides.checked = false;
+        applyOverrideFilter();
+        clearHighlights();
+        if(wrap) wrap.scrollTop = 0;
+    }
+
+    if(weekBtn) weekBtn.addEventListener('click', jumpToWeek);
+    if(dateBtn) dateBtn.addEventListener('click', jumpToDate);
+    if(weekInput) weekInput.addEventListener('keydown', (e)=>{ if(e.key==='Enter') jumpToWeek(); });
+    if(dateInput) dateInput.addEventListener('keydown', (e)=>{ if(e.key==='Enter') jumpToDate(); });
+    if(onlyOverrides) onlyOverrides.addEventListener('change', applyOverrideFilter);
+    if(clearBtn) clearBtn.addEventListener('click', clearNav);
+
+    // Apply filter once on load in case checkbox is pre-checked by browser restore
+    applyOverrideFilter();
+}
+
+
+const exportRunsBtn = document.getElementById('exportRunsCsv');
+if(exportRunsBtn) exportRunsBtn.addEventListener('click', exportRunsCSV);
+
+const exportWeeklyBtn = document.getElementById('exportWeeklyCsv');
+if(exportWeeklyBtn) exportWeeklyBtn.addEventListener('click', exportWeeklySummaryCSV);
+
+// Init: Plan table navigation + overrides export/import
+try{ initPlanTableNavigation(); }catch(e){}
+try{ initOverridesExportImport(); }catch(e){}
+
+</script>
+
+</body>
+</html>
