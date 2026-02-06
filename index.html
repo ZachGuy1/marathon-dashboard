@@ -498,19 +498,86 @@ function setSyncStatus(status) {
     try {
         console.log('📥 Loading data from Firebase...');
 
+        // Keep a snapshot of localStorage data (loaded before Firebase init)
+        const localOverrides = (OVERRIDES && typeof OVERRIDES === 'object') ? JSON.parse(JSON.stringify(OVERRIDES)) : {};
+        const localUserRuns = Array.isArray(userRuns) ? JSON.parse(JSON.stringify(userRuns)) : [];
+
+        let firebaseOverrides = {};
+        let firebaseRuns = [];
+
         const overridesDoc = await db.collection('marathon-data').doc('overrides').get();
         if (overridesDoc.exists) {
-            OVERRIDES = overridesDoc.data().data || {};
-            console.log('✅ Loaded', Object.keys(OVERRIDES).length, 'override days');
+            firebaseOverrides = overridesDoc.data().data || {};
+            console.log('✅ Loaded', Object.keys(firebaseOverrides).length, 'override days from Firebase');
         }
 
         const runsDoc = await db.collection('marathon-data').doc('user-runs').get();
         if (runsDoc.exists) {
-            userRuns = runsDoc.data().runs || [];
-            console.log('✅ Loaded', userRuns.length, 'runs');
+            firebaseRuns = runsDoc.data().runs || [];
+            console.log('✅ Loaded', firebaseRuns.length, 'runs from Firebase');
         } else {
             console.log('⚠️ No runs in Firebase yet');
         }
+
+        // --- Merge overrides: localStorage + Firebase (Firebase wins per-field conflicts) ---
+        const mergedOverrides = {};
+        const allOverrideDates = new Set([...Object.keys(localOverrides), ...Object.keys(firebaseOverrides)]);
+        for (const iso of allOverrideDates) {
+            const local = localOverrides[iso];
+            const fb = firebaseOverrides[iso];
+            if (local && fb) {
+                mergedOverrides[iso] = {};
+                if (local.planned || fb.planned) {
+                    mergedOverrides[iso].planned = { ...(local.planned || {}), ...(fb.planned || {}) };
+                }
+                if (local.actual || fb.actual) {
+                    mergedOverrides[iso].actual = { ...(local.actual || {}), ...(fb.actual || {}) };
+                }
+            } else {
+                mergedOverrides[iso] = fb || local;
+            }
+        }
+        OVERRIDES = mergedOverrides;
+
+        const localOnlyOverrides = Object.keys(localOverrides).filter(k => !firebaseOverrides[k]);
+        if (localOnlyOverrides.length > 0) {
+            console.log('📤 Syncing', localOnlyOverrides.length, 'local-only override days to Firebase...');
+            try {
+                await db.collection('marathon-data').doc('overrides').set({
+                    data: mergedOverrides,
+                    updatedAt: new Date()
+                });
+                console.log('✅ Synced merged overrides to Firebase');
+            } catch(e) {
+                console.warn('⚠️ Could not sync overrides to Firebase:', e);
+            }
+        }
+        console.log('✅ Using', Object.keys(OVERRIDES).length, 'total override days (merged)');
+
+        // --- Merge userRuns: localStorage + Firebase (Firebase wins for same isoDate) ---
+        const runsByDate = new Map();
+        for (const r of localUserRuns) {
+            if (r && r.isoDate) runsByDate.set(r.isoDate, r);
+        }
+        for (const r of firebaseRuns) {
+            if (r && r.isoDate) runsByDate.set(r.isoDate, r); // Firebase wins
+        }
+        userRuns = Array.from(runsByDate.values());
+
+        const localOnlyRuns = localUserRuns.filter(r => r && r.isoDate && !firebaseRuns.some(fr => fr && fr.isoDate === r.isoDate));
+        if (localOnlyRuns.length > 0) {
+            console.log('📤 Syncing', localOnlyRuns.length, 'local-only runs to Firebase...');
+            try {
+                await db.collection('marathon-data').doc('user-runs').set({
+                    runs: userRuns,
+                    updatedAt: new Date()
+                });
+                console.log('✅ Synced merged runs to Firebase');
+            } catch(e) {
+                console.warn('⚠️ Could not sync runs to Firebase:', e);
+            }
+        }
+        console.log('✅ Using', userRuns.length, 'total runs (merged)');
 
         console.log('🔄 Rebuilding data structures...');
         rebuildLegacyEditsFromEffective();
