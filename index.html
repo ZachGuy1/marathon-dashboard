@@ -945,6 +945,7 @@ function setSyncStatus(status) {
                     <button id="clearRuns" type="button" style="padding:6px 8px;border:1px solid #ddd;border-radius:10px;background:white;cursor:pointer;">Clear saved runs</button>
                     <button id="exportRunsCsv" type="button" style="padding:6px 8px;border:1px solid #ddd;border-radius:10px;background:white;cursor:pointer;">Export runs (CSV)</button>
                     <button id="exportWeeklyCsv" type="button" style="padding:6px 8px;border:1px solid #ddd;border-radius:10px;background:white;cursor:pointer;">Export Entire Plan</button>
+                    <button id="refreshChartsBtn" type="button" style="padding:6px 12px;border:none;border-radius:10px;background:#667eea;color:white;font-weight:700;cursor:pointer;">🔄 Refresh Charts</button>
                     <div style="font-size:0.85em;color:#666;">Clearing removes only runs you added in this browser (defaults remain).</div>
                 </div>
             </div>
@@ -3275,6 +3276,22 @@ if(exportRunsBtn) exportRunsBtn.addEventListener('click', exportRunsCSV);
 
 const exportWeeklyBtn = document.getElementById('exportWeeklyCsv');
 if(exportWeeklyBtn) exportWeeklyBtn.addEventListener('click', exportWeeklySummaryCSV);
+
+const refreshChartsBtn = document.getElementById('refreshChartsBtn');
+if(refreshChartsBtn) refreshChartsBtn.addEventListener('click', function(){
+    try {
+        refreshRunsFromEffectiveDays();
+        recomputeAll();
+        updatePlannedSeriesFromEdits();
+        updateTopStats();
+        refreshChartsBtn.textContent = '✅ Charts Refreshed!';
+        setTimeout(() => { refreshChartsBtn.textContent = '🔄 Refresh Charts'; }, 2000);
+    } catch(e) {
+        console.error('Refresh charts error:', e);
+        refreshChartsBtn.textContent = '❌ Error';
+        setTimeout(() => { refreshChartsBtn.textContent = '🔄 Refresh Charts'; }, 2000);
+    }
+});
 
 // Init: Plan table navigation + overrides export/import
 try{ initPlanTableNavigation(); }catch(e){}
