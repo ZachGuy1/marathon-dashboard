@@ -489,40 +489,74 @@ function setSyncStatus(status) {
     }
 }
 
-setTimeout(() => {
+// Initialize Firebase integration and load data
+(async function initFirebase() {
+    console.log('🚀 Starting Firebase initialization...');
+
+    await new Promise(resolve => setTimeout(resolve, 500));
+
+    try {
+        console.log('📥 Loading data from Firebase...');
+
+        const overridesDoc = await db.collection('marathon-data').doc('overrides').get();
+        if (overridesDoc.exists) {
+            OVERRIDES = overridesDoc.data().data || {};
+            console.log('✅ Loaded', Object.keys(OVERRIDES).length, 'override days');
+        }
+
+        const runsDoc = await db.collection('marathon-data').doc('user-runs').get();
+        if (runsDoc.exists) {
+            userRuns = runsDoc.data().runs || [];
+            console.log('✅ Loaded', userRuns.length, 'runs');
+        } else {
+            console.log('⚠️ No runs in Firebase yet');
+        }
+
+        console.log('🔄 Rebuilding data structures...');
+        rebuildLegacyEditsFromEffective();
+        refreshRunsFromEffectiveDays();
+
+        console.log('🎨 Updating UI...');
+        updateCountdown();
+        updateTopStats();
+        renderPlanTable();
+        refreshRangeControls();
+
+        if (typeof recomputeAll === 'function') {
+            recomputeAll();
+        }
+
+        console.log('✅ Dashboard initialized with Firebase data!');
+
+    } catch (error) {
+        console.error('❌ Firebase init error:', error);
+        setSyncStatus('offline');
+    }
+
     const originalSaveEdits = saveEdits;
     const originalLoadEdits = loadEdits;
     const originalSaveRuns = saveRuns;
     const originalLoadSavedRuns = loadSavedRuns;
-    
-   // Debounce timer to prevent sync on every keystroke
-let saveTimer = null;
 
-window.saveEdits = async function(key, edits) {
-    // Save to localStorage immediately (no lag)
-    originalSaveEdits(key, edits);
-    
-    // Show syncing status
-    setSyncStatus('syncing');
-    
-    // Clear previous timer
-    if (saveTimer) clearTimeout(saveTimer);
-    
-    // Wait 3 seconds after last keystroke before syncing to Firebase
-    saveTimer = setTimeout(async () => {
-        try {
-            await db.collection('marathon-data').doc('overrides').set({
-                data: edits || {},
-                updatedAt: new Date()
-            });
-            setSyncStatus('synced');
-        } catch(e) {
-            console.error('Firebase save error:', e);
-            setSyncStatus('offline');
-        }
-    }, 3000); // Wait 3 seconds after typing stops
-};
-    
+    let saveTimer = null;
+    window.saveEdits = async function(key, edits) {
+        originalSaveEdits(key, edits);
+        setSyncStatus('syncing');
+        if (saveTimer) clearTimeout(saveTimer);
+        saveTimer = setTimeout(async () => {
+            try {
+                await db.collection('marathon-data').doc('overrides').set({
+                    data: edits || {},
+                    updatedAt: new Date()
+                });
+                setSyncStatus('synced');
+            } catch(e) {
+                console.error('Firebase save error:', e);
+                setSyncStatus('offline');
+            }
+        }, 3000);
+    };
+
     window.loadEdits = async function(key) {
         try {
             const doc = await db.collection('marathon-data').doc('overrides').get();
@@ -535,29 +569,26 @@ window.saveEdits = async function(key, edits) {
             return originalLoadEdits(key);
         }
     };
-    
- let runsTimer = null;
 
-window.saveRuns = async function(userRuns) {
-    originalSaveRuns(userRuns);
-    setSyncStatus('syncing');
-    
-    if (runsTimer) clearTimeout(runsTimer);
-    
-    runsTimer = setTimeout(async () => {
-        try {
-            await db.collection('marathon-data').doc('user-runs').set({
-                runs: userRuns || [],
-                updatedAt: new Date()
-            });
-            setSyncStatus('synced');
-        } catch(e) {
-            console.error('Firebase save error:', e);
-            setSyncStatus('offline');
-        }
-    }, 3000); // Wait 3 seconds
-};
-    
+    let runsTimer = null;
+    window.saveRuns = async function(userRuns) {
+        originalSaveRuns(userRuns);
+        setSyncStatus('syncing');
+        if (runsTimer) clearTimeout(runsTimer);
+        runsTimer = setTimeout(async () => {
+            try {
+                await db.collection('marathon-data').doc('user-runs').set({
+                    runs: userRuns || [],
+                    updatedAt: new Date()
+                });
+                setSyncStatus('synced');
+            } catch(e) {
+                console.error('Firebase save error:', e);
+                setSyncStatus('offline');
+            }
+        }, 3000);
+    };
+
     window.loadSavedRuns = async function() {
         try {
             const doc = await db.collection('marathon-data').doc('user-runs').get();
@@ -570,11 +601,12 @@ window.saveRuns = async function(userRuns) {
             return originalLoadSavedRuns();
         }
     };
-    
+
     db.collection('marathon-data').doc('overrides').onSnapshot((doc) => {
         if (doc.exists && window.OVERRIDES) {
             const newData = doc.data().data || {};
             if (JSON.stringify(newData) !== JSON.stringify(window.OVERRIDES)) {
+                console.log('📡 Overrides updated from another device');
                 window.OVERRIDES = newData;
                 if (window.rebuildLegacyEditsFromEffective) window.rebuildLegacyEditsFromEffective();
                 if (window.updatePlannedSeriesFromEdits) window.updatePlannedSeriesFromEdits();
@@ -583,43 +615,22 @@ window.saveRuns = async function(userRuns) {
             }
         }
     });
-    
+
     db.collection('marathon-data').doc('user-runs').onSnapshot((doc) => {
         if (doc.exists) {
             const newRuns = doc.data().runs || [];
-            if (window.refreshRunsFromEffectiveDays && window.recomputeAll) {
+            if (JSON.stringify(newRuns) !== JSON.stringify(window.userRuns)) {
+                console.log('📡 Runs updated from another device');
                 window.userRuns = newRuns;
-                window.refreshRunsFromEffectiveDays();
-                window.recomputeAll();
+                if (window.refreshRunsFromEffectiveDays && window.recomputeAll) {
+                    window.refreshRunsFromEffectiveDays();
+                    window.recomputeAll();
+                }
             }
         }
     });
-    
-    (async function initFirebase() {
-        setSyncStatus('syncing');
-        try {
-            const overridesDoc = await db.collection('marathon-data').doc('overrides').get();
-            if (overridesDoc.exists) {
-                window.OVERRIDES = overridesDoc.data().data || {};
-                if (window.rebuildLegacyEditsFromEffective) window.rebuildLegacyEditsFromEffective();
-                if (typeof renderPlanTable === 'function') renderPlanTable();
-            }
-            
-            const runsDoc = await db.collection('marathon-data').doc('user-runs').get();
-            if (runsDoc.exists && window.refreshRunsFromEffectiveDays) {
-                window.userRuns = runsDoc.data().runs || [];
-                window.refreshRunsFromEffectiveDays();
-                if (window.recomputeAll) window.recomputeAll();
-            }
-            
-            setSyncStatus('synced');
-        } catch(e) {
-            console.error('Firebase init error:', e);
-            setSyncStatus('offline');
-        }
-    })();
-    
-}, 1000);
+
+})();
 </script>
 <!-- FIREBASE INTEGRATION END -->
 
@@ -980,7 +991,6 @@ function updateCountdown() {
 
             document.getElementById('countdown').textContent = diffDays;
         }
-        updateCountdown();
         const asOfEl = document.getElementById('asOfDate');
         if (asOfEl) asOfEl.addEventListener('change', updateCountdown);
 
@@ -2130,10 +2140,6 @@ function updateCountdown() {
         }
 
 
-        // Initial render (planned + actual editable)
-        renderPlanTable();
-
-
 // ----------------------------
         // Charts
         // ----------------------------
@@ -2960,9 +2966,6 @@ const asOfDate = document.getElementById('asOfDate');
             updateTopStats();
         }
         window.recomputeAll = recomputeAll;
-
-        renderRecentRuns();
-        updateTopStats();
 
         const addRunForm = document.getElementById('addRunForm');
         addRunForm.addEventListener('submit', (e)=>{
