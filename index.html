@@ -669,23 +669,18 @@ function setSyncStatus(status) {
         }
     };
 
-    // NOTE: OVERRIDES, userRuns, mainChart are let/const in the main script block.
-    // let/const do NOT create window properties, so we must reference them directly
-    // (not via window.*). The global lexical environment is shared across script blocks,
-    // so these references resolve correctly at callback execution time.
+    // Use handler functions defined in the main script block (window._handle*)
+    // which have guaranteed closure access to let/const variables (OVERRIDES,
+    // userRuns, mainChart, runs, etc.) that are NOT accessible via window.
 
     db.collection('marathon-data').doc('overrides').onSnapshot((doc) => {
-        if (doc.exists) {
+        if (doc.exists && typeof window._handleFirebaseOverridesUpdate === 'function') {
             const newData = doc.data().data || {};
-            if (JSON.stringify(newData) !== JSON.stringify(OVERRIDES)) {
+            const current = typeof window._getOverrides === 'function' ? window._getOverrides() : null;
+            if (JSON.stringify(newData) !== JSON.stringify(current)) {
                 console.log('📡 Overrides updated from another device');
-                OVERRIDES = newData;
                 try {
-                    if (typeof rebuildLegacyEditsFromEffective === 'function') rebuildLegacyEditsFromEffective();
-                    if (typeof refreshRunsFromEffectiveDays === 'function') refreshRunsFromEffectiveDays();
-                    if (typeof renderPlanTable === 'function') renderPlanTable();
-                    if (typeof recomputeAll === 'function') recomputeAll();
-                    if (typeof applyDateFilter === 'function') applyDateFilter();
+                    window._handleFirebaseOverridesUpdate(newData);
                     console.log('✅ Charts and UI updated from overrides sync');
                 } catch(e) {
                     console.error('❌ Overrides sync UI update error:', e);
@@ -695,15 +690,13 @@ function setSyncStatus(status) {
     });
 
     db.collection('marathon-data').doc('user-runs').onSnapshot((doc) => {
-        if (doc.exists) {
+        if (doc.exists && typeof window._handleFirebaseRunsUpdate === 'function') {
             const newRuns = doc.data().runs || [];
-            if (JSON.stringify(newRuns) !== JSON.stringify(userRuns)) {
+            const current = typeof window._getUserRuns === 'function' ? window._getUserRuns() : null;
+            if (JSON.stringify(newRuns) !== JSON.stringify(current)) {
                 console.log('📡 Runs updated from another device');
-                userRuns = newRuns;
                 try {
-                    if (typeof refreshRunsFromEffectiveDays === 'function') refreshRunsFromEffectiveDays();
-                    if (typeof recomputeAll === 'function') recomputeAll();
-                    if (typeof applyDateFilter === 'function') applyDateFilter();
+                    window._handleFirebaseRunsUpdate(newRuns);
                     console.log('✅ Charts and UI updated from runs sync');
                 } catch(e) {
                     console.error('❌ Runs sync UI update error:', e);
@@ -3048,6 +3041,25 @@ const asOfDate = document.getElementById('asOfDate');
             updateTopStats();
         }
         window.recomputeAll = recomputeAll;
+
+        // Handlers for Firebase real-time sync — defined HERE in the main script
+        // so they have guaranteed closure access to let/const variables (OVERRIDES,
+        // userRuns, mainChart, runs, etc.) that are NOT on window.
+        window._handleFirebaseOverridesUpdate = function(newData) {
+            OVERRIDES = newData;
+            rebuildLegacyEditsFromEffective();
+            updatePlannedSeriesFromEdits();
+            refreshRunsFromEffectiveDays();
+            renderPlanTable();
+            recomputeAll();
+        };
+        window._handleFirebaseRunsUpdate = function(newRuns) {
+            userRuns = newRuns;
+            refreshRunsFromEffectiveDays();
+            recomputeAll();
+        };
+        window._getOverrides = function() { return OVERRIDES; };
+        window._getUserRuns = function() { return userRuns; };
 
         const addRunForm = document.getElementById('addRunForm');
         addRunForm.addEventListener('submit', (e)=>{
