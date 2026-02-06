@@ -679,6 +679,24 @@ function setSyncStatus(status) {
                 if (window.updatePlannedSeriesFromEdits) window.updatePlannedSeriesFromEdits();
                 if (window.updateTopStats) window.updateTopStats();
                 if (typeof renderPlanTable === 'function') renderPlanTable();
+
+                // Update main chart
+                if (window.mainChart) {
+                    const runSeries = computeRunPointSeries(runs);
+                    const types = Object.keys(colors);
+                    types.forEach((t, i) => {
+                        if (mainChart.data.datasets[2+i]) {
+                            mainChart.data.datasets[2+i].data = runSeries[t];
+                        }
+                    });
+                    mainChart.data.datasets[1].data = makeLinePoints(computeActualWeeklyMileage(runs));
+                    mainChart.update();
+                }
+
+                // Update bottom charts
+                if (typeof applyDateFilter === 'function') {
+                    applyDateFilter();
+                }
             }
         }
     });
@@ -692,6 +710,24 @@ function setSyncStatus(status) {
                 if (window.refreshRunsFromEffectiveDays && window.recomputeAll) {
                     window.refreshRunsFromEffectiveDays();
                     window.recomputeAll();
+                }
+
+                // Update main chart
+                if (window.mainChart) {
+                    const runSeries = computeRunPointSeries(runs);
+                    const types = Object.keys(colors);
+                    types.forEach((t, i) => {
+                        if (mainChart.data.datasets[2+i]) {
+                            mainChart.data.datasets[2+i].data = runSeries[t];
+                        }
+                    });
+                    mainChart.data.datasets[1].data = makeLinePoints(computeActualWeeklyMileage(runs));
+                    mainChart.update();
+                }
+
+                // Update bottom charts
+                if (typeof applyDateFilter === 'function') {
+                    applyDateFilter();
                 }
             }
         }
