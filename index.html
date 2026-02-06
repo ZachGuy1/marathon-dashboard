@@ -669,33 +669,26 @@ function setSyncStatus(status) {
         }
     };
 
+    // NOTE: OVERRIDES, userRuns, mainChart are let/const in the main script block.
+    // let/const do NOT create window properties, so we must reference them directly
+    // (not via window.*). The global lexical environment is shared across script blocks,
+    // so these references resolve correctly at callback execution time.
+
     db.collection('marathon-data').doc('overrides').onSnapshot((doc) => {
-        if (doc.exists && window.OVERRIDES) {
+        if (doc.exists) {
             const newData = doc.data().data || {};
-            if (JSON.stringify(newData) !== JSON.stringify(window.OVERRIDES)) {
+            if (JSON.stringify(newData) !== JSON.stringify(OVERRIDES)) {
                 console.log('📡 Overrides updated from another device');
-                window.OVERRIDES = newData;
-                if (window.rebuildLegacyEditsFromEffective) window.rebuildLegacyEditsFromEffective();
-                if (window.updatePlannedSeriesFromEdits) window.updatePlannedSeriesFromEdits();
-                if (window.updateTopStats) window.updateTopStats();
-                if (typeof renderPlanTable === 'function') renderPlanTable();
-
-                // Update main chart
-                if (window.mainChart) {
-                    const runSeries = computeRunPointSeries(runs);
-                    const types = Object.keys(colors);
-                    types.forEach((t, i) => {
-                        if (mainChart.data.datasets[2+i]) {
-                            mainChart.data.datasets[2+i].data = runSeries[t];
-                        }
-                    });
-                    mainChart.data.datasets[1].data = makeLinePoints(computeActualWeeklyMileage(runs));
-                    mainChart.update();
-                }
-
-                // Update bottom charts
-                if (typeof applyDateFilter === 'function') {
-                    applyDateFilter();
+                OVERRIDES = newData;
+                try {
+                    if (typeof rebuildLegacyEditsFromEffective === 'function') rebuildLegacyEditsFromEffective();
+                    if (typeof refreshRunsFromEffectiveDays === 'function') refreshRunsFromEffectiveDays();
+                    if (typeof renderPlanTable === 'function') renderPlanTable();
+                    if (typeof recomputeAll === 'function') recomputeAll();
+                    if (typeof applyDateFilter === 'function') applyDateFilter();
+                    console.log('✅ Charts and UI updated from overrides sync');
+                } catch(e) {
+                    console.error('❌ Overrides sync UI update error:', e);
                 }
             }
         }
@@ -704,40 +697,16 @@ function setSyncStatus(status) {
     db.collection('marathon-data').doc('user-runs').onSnapshot((doc) => {
         if (doc.exists) {
             const newRuns = doc.data().runs || [];
-            if (JSON.stringify(newRuns) !== JSON.stringify(window.userRuns)) {
+            if (JSON.stringify(newRuns) !== JSON.stringify(userRuns)) {
                 console.log('📡 Runs updated from another device');
-                window.userRuns = newRuns;
-                if (window.refreshRunsFromEffectiveDays && window.recomputeAll) {
-                    window.refreshRunsFromEffectiveDays();
-                    window.recomputeAll();
-                }
-
+                userRuns = newRuns;
                 try {
-                    console.log('🔄 Updating charts after runs sync...');
-
-                    // Update main chart
-                    if (window.mainChart && typeof computeRunPointSeries === 'function') {
-                        const runSeries = computeRunPointSeries(runs);
-                        const types = Object.keys(colors);
-                        types.forEach((t, i) => {
-                            if (mainChart.data.datasets[2+i]) {
-                                mainChart.data.datasets[2+i].data = runSeries[t];
-                            }
-                        });
-                        if (typeof computeActualWeeklyMileage === 'function') {
-                            mainChart.data.datasets[1].data = makeLinePoints(computeActualWeeklyMileage(runs));
-                        }
-                        mainChart.update();
-                        console.log('✅ Main chart updated');
-                    }
-
-                    // Update bottom charts
-                    if (typeof applyDateFilter === 'function') {
-                        applyDateFilter();
-                        console.log('✅ Bottom charts updated');
-                    }
+                    if (typeof refreshRunsFromEffectiveDays === 'function') refreshRunsFromEffectiveDays();
+                    if (typeof recomputeAll === 'function') recomputeAll();
+                    if (typeof applyDateFilter === 'function') applyDateFilter();
+                    console.log('✅ Charts and UI updated from runs sync');
                 } catch(e) {
-                    console.error('❌ Chart update error:', e);
+                    console.error('❌ Runs sync UI update error:', e);
                 }
             }
         }
