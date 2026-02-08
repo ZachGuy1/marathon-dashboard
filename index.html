@@ -441,9 +441,387 @@ button, .pill-btn, input[type="submit"] {
 * {
     -webkit-overflow-scrolling: touch;
 }
+
+/* ============================
+   Dark Mode Toggle
+   ============================ */
+#darkModeToggle {
+    position: fixed;
+    top: 20px;
+    right: 160px;
+    z-index: 1001;
+    padding: 8px 14px;
+    border-radius: 20px;
+    border: 1px solid #ddd;
+    background: white;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: background 0.3s, color 0.3s, border-color 0.3s;
+    min-height: 38px;
+}
+#darkModeToggle:hover {
+    border-color: #667eea;
+}
+
+/* ============================
+   Dark Mode Styles
+   ============================ */
+
+/* Smooth transitions for theme switching */
+body.dark-mode-transition,
+body.dark-mode-transition *,
+body.dark-mode-transition *::before,
+body.dark-mode-transition *::after {
+    transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease !important;
+}
+
+/* --- Body & page background --- */
+body.dark-mode {
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+}
+
+/* --- Container --- */
+body.dark-mode .container {
+    background: #1e1e2e;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.6);
+}
+
+/* --- Header gradient (slightly darker) --- */
+body.dark-mode .header {
+    background: linear-gradient(135deg, #4a5fc1 0%, #5a3d8a 100%);
+}
+
+/* --- Stats grid --- */
+body.dark-mode .stats-grid {
+    background: #181825;
+}
+body.dark-mode .stat-card {
+    background: #2a2a3d;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+}
+body.dark-mode .stat-card h3 {
+    color: #a0a0b8;
+}
+body.dark-mode .stat-card .value {
+    color: #e0e0f0;
+}
+body.dark-mode .stat-card .subvalue {
+    color: #8888a0;
+}
+
+/* --- Chart sections --- */
+body.dark-mode .chart-section {
+    background: #1e1e2e;
+}
+body.dark-mode .chart-title {
+    color: #e0e0f0;
+}
+
+/* --- Charts row & mini charts --- */
+body.dark-mode .charts-row {
+    background: #181825;
+}
+body.dark-mode .mini-chart {
+    background: #2a2a3d;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+}
+
+/* --- Week cards --- */
+body.dark-mode .week-card {
+    background: #2a2a3d;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+}
+body.dark-mode .week-header {
+    border-bottom-color: #3a3a50;
+}
+body.dark-mode .week-title {
+    color: #e0e0f0;
+}
+body.dark-mode .week-mileage {
+    color: #a0a0b8;
+}
+
+/* --- Week card header (upcoming schedule) --- */
+body.dark-mode .week-card-header {
+    border-bottom-color: #3a3a50;
+}
+body.dark-mode .week-card-header .left {
+    color: #e0e0f0;
+}
+
+/* --- Run items --- */
+body.dark-mode .run-item {
+    background: #2a2a3d;
+}
+body.dark-mode .run-date {
+    color: #e0e0f0;
+}
+body.dark-mode .run-stats {
+    color: #a0a0b8;
+}
+
+/* --- Runs list section --- */
+body.dark-mode .runs-list {
+    background: #1e1e2e;
+}
+
+/* --- Pill buttons --- */
+body.dark-mode .pill-btn {
+    background: #2a2a3d;
+    border-color: #444460;
+    color: #d0d0e0;
+}
+body.dark-mode .pill-btn:hover {
+    border-color: #667eea;
+}
+
+/* --- Form inputs & selects --- */
+body.dark-mode input[type="date"],
+body.dark-mode input[type="number"],
+body.dark-mode input[type="text"],
+body.dark-mode select,
+body.dark-mode .input {
+    background: #2a2a3d !important;
+    border-color: #444460 !important;
+    color: #e0e0f0 !important;
+}
+
+/* --- Buttons (primary purple) --- */
+body.dark-mode button[style*="background:#667eea"],
+body.dark-mode #refreshDashboardBtn {
+    background: #5a6fd1 !important;
+}
+
+/* --- As-of bar & tab bar (inline-styled) --- */
+body.dark-mode #asOfBar {
+    background: #2a2a3d !important;
+    border-color: #444460 !important;
+}
+body.dark-mode #tabBar {
+    background: #2a2a3d !important;
+    border-color: #444460 !important;
+}
+
+/* --- Error banner --- */
+body.dark-mode #errorBanner {
+    background: #3d1f1f !important;
+    border-color: #6b2c2c !important;
+    color: #ffaaaa !important;
+}
+
+/* --- Plan table --- */
+body.dark-mode #planTable {
+    color: #d0d0e0;
+}
+body.dark-mode #planTable thead th {
+    background: #252535 !important;
+    color: #c0c0d8 !important;
+    border-bottom-color: #3a3a50 !important;
+}
+body.dark-mode #planTable tbody tr:nth-child(odd) {
+    background: #1e1e2e !important;
+}
+body.dark-mode #planTable tbody tr:nth-child(even) {
+    background: #232338 !important;
+}
+body.dark-mode #planTable tbody tr:hover {
+    background: #2a2a50 !important;
+}
+body.dark-mode #planTable th,
+body.dark-mode #planTable td {
+    border-bottom-color: #333350 !important;
+}
+body.dark-mode #planTable th:nth-child(2),
+body.dark-mode #planTable td:nth-child(2),
+body.dark-mode #planTable th:nth-child(4),
+body.dark-mode #planTable td:nth-child(4),
+body.dark-mode #planTable th:nth-child(8),
+body.dark-mode #planTable td:nth-child(8) {
+    border-right-color: #3a3a55 !important;
+}
+body.dark-mode #planTable td.weekCell,
+body.dark-mode #planTable td.weekCell strong {
+    color: #b0c4de !important;
+}
+body.dark-mode #planTable td[id^="planWeekTotal_"] {
+    color: #9ab0cc !important;
+    background: rgba(150,170,200,0.08) !important;
+}
+body.dark-mode #planTable tbody tr.weekStart td {
+    border-top-color: #444465 !important;
+}
+body.dark-mode #planTable input,
+body.dark-mode #planTable select {
+    background: #2a2a40 !important;
+    color: #d0d0e0 !important;
+    border-color: #444460 !important;
+}
+
+/* --- Plan table controls --- */
+body.dark-mode .plan-table-controls {
+    background: #252535 !important;
+    border-color: #3a3a50 !important;
+}
+body.dark-mode .plan-table-controls label {
+    color: #c0c0d8 !important;
+}
+body.dark-mode .plan-table-controls .smallBtn {
+    background: #2a2a3d !important;
+    border-color: #444460 !important;
+    color: #d0d0e0 !important;
+}
+body.dark-mode .plan-table-controls .smallBtn.secondary {
+    background: #232338 !important;
+}
+body.dark-mode .checkboxLabel {
+    color: #c0c0d8 !important;
+}
+
+/* --- Plan table wrapper border --- */
+body.dark-mode #planTableWrap {
+    border-color: #3a3a50 !important;
+}
+
+/* --- Workout items --- */
+body.dark-mode .workout-item {
+    background: #2a2a3d;
+}
+body.dark-mode .workout-item.easy { background: #1a2a3d; }
+body.dark-mode .workout-item.tempo { background: #3d2e1a; }
+body.dark-mode .workout-item.long { background: #3d1a1a; }
+body.dark-mode .workout-item.off { background: #2a2a2e; border-left-color: #666; }
+body.dark-mode .workout-item.recovery { background: #1a3d28; }
+body.dark-mode .workout-item.strength { background: #2a1a3d; }
+body.dark-mode .workout-item.cross { background: #1a3d38; }
+body.dark-mode .workout-item .dow {
+    color: #c0c0d8;
+}
+body.dark-mode .workout-item .detail {
+    color: #e0e0f0;
+}
+body.dark-mode .workout-day {
+    color: #a0a0b8;
+}
+body.dark-mode .workout-detail {
+    color: #d0d0e0;
+}
+
+/* --- Generic inline color overrides --- */
+body.dark-mode [style*="color:#333"],
+body.dark-mode [style*="color: #333"] {
+    color: #e0e0f0 !important;
+}
+body.dark-mode [style*="color:#444"],
+body.dark-mode [style*="color: #444"] {
+    color: #c8c8e0 !important;
+}
+body.dark-mode [style*="color:#666"],
+body.dark-mode [style*="color: #666"] {
+    color: #a0a0b8 !important;
+}
+body.dark-mode [style*="color:#888"],
+body.dark-mode [style*="color: #888"] {
+    color: #8888a0 !important;
+}
+
+/* --- Inline bg overrides for common patterns --- */
+body.dark-mode [style*="background:#f8f9fa"],
+body.dark-mode [style*="background: #f8f9fa"] {
+    background: #252535 !important;
+}
+body.dark-mode [style*="background:#f8f8fb"],
+body.dark-mode [style*="background: #f8f8fb"] {
+    background: #252535 !important;
+}
+body.dark-mode [style*="background:#fff"],
+body.dark-mode [style*="background: #fff"],
+body.dark-mode [style*="background:white"],
+body.dark-mode [style*="background: white"] {
+    background: #2a2a3d !important;
+}
+
+/* --- Inline border overrides --- */
+body.dark-mode [style*="border:1px solid #ddd"],
+body.dark-mode [style*="border: 1px solid #ddd"] {
+    border-color: #444460 !important;
+}
+body.dark-mode [style*="border:1px solid #eee"],
+body.dark-mode [style*="border: 1px solid #eee"] {
+    border-color: #3a3a50 !important;
+}
+body.dark-mode [style*="border:1px solid #e5e5e5"],
+body.dark-mode [style*="border: 1px solid #e5e5e5"] {
+    border-color: #3a3a50 !important;
+}
+
+/* --- Upcoming schedule h2 --- */
+body.dark-mode h2 {
+    color: #e0e0f0;
+}
+
+/* --- Override indicator --- */
+body.dark-mode .override-indicator {
+    background: #6b8adf;
+}
+
+/* --- planRowHighlight --- */
+body.dark-mode .planRowHighlight {
+    outline-color: rgba(120,145,240,0.55);
+}
+
+/* --- Dark mode toggle itself --- */
+body.dark-mode #darkModeToggle {
+    background: #2a2a3d;
+    border-color: #444460;
+    color: #e0e0f0;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+}
+
+/* --- Sync status in dark mode --- */
+body.dark-mode #syncStatus {
+    box-shadow: 0 2px 8px rgba(0,0,0,0.4) !important;
+}
+
+/* --- Scrollbar in dark mode --- */
+body.dark-mode ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+body.dark-mode ::-webkit-scrollbar-track {
+    background: #1e1e2e;
+}
+body.dark-mode ::-webkit-scrollbar-thumb {
+    background: #444460;
+    border-radius: 4px;
+}
+body.dark-mode ::-webkit-scrollbar-thumb:hover {
+    background: #555580;
+}
 </style>
 </head>
 <body>
+
+<!-- Dark Mode Toggle Button -->
+<button id="darkModeToggle" type="button" aria-label="Toggle dark mode"></button>
+<script>
+// Apply saved dark mode preference immediately to avoid flash of light theme
+(function(){
+    var DARK_MODE_KEY = 'marathon_dark_mode';
+    var isDark = localStorage.getItem(DARK_MODE_KEY) === 'true';
+    var btn = document.getElementById('darkModeToggle');
+    if(isDark){
+        document.body.classList.add('dark-mode');
+        btn.textContent = '\u2600\uFE0F Light';
+    } else {
+        btn.textContent = '\uD83C\uDF19 Dark';
+    }
+})();
+</script>
 
 <!-- FIREBASE INTEGRATION START -->
 <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
@@ -3328,6 +3706,112 @@ if(refreshDashboardBtn) refreshDashboardBtn.addEventListener('click', function()
 // Init: Plan table navigation + overrides export/import
 try{ initPlanTableNavigation(); }catch(e){}
 try{ initOverridesExportImport(); }catch(e){}
+
+// ============================
+// Dark Mode Toggle
+// ============================
+(function(){
+    var DARK_MODE_KEY = 'marathon_dark_mode';
+    var btn = document.getElementById('darkModeToggle');
+    if(!btn) return;
+
+    var darkGridColor = 'rgba(255,255,255,0.1)';
+    var lightGridColor = '#f0f0f0';
+    var darkTickColor = '#c0c0d8';
+    var lightTickColor = '#666';
+    var darkTitleColor = '#c0c0d8';
+    var lightTitleColor = '#666';
+    var darkLegendColor = '#d0d0e0';
+    var lightLegendColor = '#666';
+    var darkPieBorder = '#2a2a3d';
+    var lightPieBorder = 'white';
+    var darkPointBorder = '#2a2a3d';
+    var lightPointBorder = 'white';
+
+    function applyChartTheme(isDark){
+        var allCharts = [
+            typeof mainChart !== 'undefined' ? mainChart : null,
+            typeof paceChart !== 'undefined' ? paceChart : null,
+            typeof hrChart !== 'undefined' ? hrChart : null,
+            typeof pieChart !== 'undefined' ? pieChart : null
+        ].filter(Boolean);
+
+        allCharts.forEach(function(chart){
+            var opts = chart.options;
+
+            // Update grid & tick colors for all scales
+            if(opts.scales){
+                Object.keys(opts.scales).forEach(function(scaleKey){
+                    var scale = opts.scales[scaleKey];
+                    if(scale.grid) scale.grid.color = isDark ? darkGridColor : lightGridColor;
+                    if(!scale.ticks) scale.ticks = {};
+                    scale.ticks.color = isDark ? darkTickColor : lightTickColor;
+                    if(scale.title){
+                        scale.title.color = isDark ? darkTitleColor : lightTitleColor;
+                    }
+                });
+            }
+
+            // Update legend text color
+            if(opts.plugins && opts.plugins.legend){
+                if(!opts.plugins.legend.labels) opts.plugins.legend.labels = {};
+                opts.plugins.legend.labels.color = isDark ? darkLegendColor : lightLegendColor;
+            }
+
+            chart.update();
+        });
+
+        // Update specific dataset colors for dark mode
+        if(typeof mainChart !== 'undefined'){
+            // Actual mileage line point border
+            if(mainChart.data.datasets[1]){
+                mainChart.data.datasets[1].pointBorderColor = isDark ? darkPointBorder : lightPointBorder;
+            }
+            mainChart.update();
+        }
+
+        if(typeof pieChart !== 'undefined'){
+            if(pieChart.data.datasets[0]){
+                pieChart.data.datasets[0].borderColor = isDark ? darkPieBorder : lightPieBorder;
+            }
+            pieChart.update();
+        }
+
+        if(typeof paceChart !== 'undefined'){
+            if(paceChart.data.datasets[0]){
+                paceChart.data.datasets[0].pointBorderColor = isDark ? darkPointBorder : lightPointBorder;
+            }
+            paceChart.update();
+        }
+    }
+
+    function setDarkMode(isDark, animate){
+        if(animate){
+            document.body.classList.add('dark-mode-transition');
+            setTimeout(function(){ document.body.classList.remove('dark-mode-transition'); }, 400);
+        }
+
+        if(isDark){
+            document.body.classList.add('dark-mode');
+            btn.textContent = '\u2600\uFE0F Light';
+        } else {
+            document.body.classList.remove('dark-mode');
+            btn.textContent = '\uD83C\uDF19 Dark';
+        }
+
+        localStorage.setItem(DARK_MODE_KEY, isDark ? 'true' : 'false');
+        applyChartTheme(isDark);
+    }
+
+    btn.addEventListener('click', function(){
+        var isDark = !document.body.classList.contains('dark-mode');
+        setDarkMode(isDark, true);
+    });
+
+    // Apply chart theme on load (body class was set by the early init script)
+    var isDark = document.body.classList.contains('dark-mode');
+    applyChartTheme(isDark);
+})();
 
 </script>
 
