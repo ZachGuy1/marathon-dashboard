@@ -730,6 +730,7 @@ function setSyncStatus(status) {
             <button class="pill-btn" id="tabDashboard" type="button" style="border-color:#667eea; font-weight:700;">Dashboard</button>
             <button class="pill-btn" id="tabPlan" type="button">Plan Table</button>
             <button class="pill-btn" id="tabUpcomingSchedule" type="button">Upcoming Schedule</button>
+            <button id="refreshDashboardBtn" type="button" style="margin-left:auto; padding:8px 16px; border:none; border-radius:10px; background:#667eea; color:white; font-weight:700; cursor:pointer; font-size:0.95em;">Refresh Dashboard</button>
 </div>
 
         <div id="dashboardTab">
@@ -1731,6 +1732,8 @@ function updateCountdown() {
         })();
 
 
+        let _batchOverrides = false;
+
         function setOverrideField(isoDate, section, field, rawValue){
             if(!isoDate) return;
 
@@ -1771,6 +1774,9 @@ function updateCountdown() {
             }
 
             saveEdits(PLAN_OVERRIDES_STORAGE_KEY, OVERRIDES);
+
+            // Skip UI updates during batch override operations (e.g. addRunForm)
+            if(_batchOverrides) return;
 
             // Rebuild legacy views so the rest of the dashboard stays consistent in v52.
             rebuildLegacyEditsFromEffective();
@@ -3097,23 +3103,31 @@ const asOfDate = document.getElementById('asOfDate');
             };
 
             // v53: Plan Table is the source of truth — persist this run into OVERRIDES (actual fields)
-            const typeTitle = type ? (type.charAt(0).toUpperCase()+type.slice(1)) : '';
-            setOverrideField(isoDate, 'actual', 'type', typeTitle);
-            setOverrideField(isoDate, 'actual', 'miles', miles);
-            setOverrideField(isoDate, 'actual', 'pace', pace);
-            setOverrideField(isoDate, 'actual', 'hr', hrRaw);
-            setOverrideField(isoDate, 'actual', 'weather', temp);
-            // notes left blank from this form
-
-            // Keep Plan Table view in sync if user flips tabs
-            if(typeof renderPlanTable === 'function') renderPlanTable();
-            updateWeekTotalCell(week);
+            // Batch the override writes so we only recompute once at the end
+            _batchOverrides = true;
+            try {
+                const typeTitle = type ? (type.charAt(0).toUpperCase()+type.slice(1)) : '';
+                setOverrideField(isoDate, 'actual', 'type', typeTitle);
+                setOverrideField(isoDate, 'actual', 'miles', miles);
+                setOverrideField(isoDate, 'actual', 'pace', pace);
+                setOverrideField(isoDate, 'actual', 'hr', hrRaw);
+                setOverrideField(isoDate, 'actual', 'weather', temp);
+                // notes left blank from this form
+            } finally {
+                _batchOverrides = false;
+            }
 
             userRuns.push(newRun);
             saveRuns(userRuns);
 
-            runs.push(newRun);
+            // Rebuild everything once from the updated OVERRIDES
+            rebuildLegacyEditsFromEffective();
+            refreshRunsFromEffectiveDays();
             recomputeAll();
+
+            // Keep Plan Table view in sync if user flips tabs
+            if(typeof renderPlanTable === 'function') renderPlanTable();
+            updateWeekTotalCell(week);
 
             addRunForm.reset();
         });
@@ -3277,19 +3291,37 @@ if(exportRunsBtn) exportRunsBtn.addEventListener('click', exportRunsCSV);
 const exportWeeklyBtn = document.getElementById('exportWeeklyCsv');
 if(exportWeeklyBtn) exportWeeklyBtn.addEventListener('click', exportWeeklySummaryCSV);
 
+function fullDashboardRefresh(){
+    refreshRunsFromEffectiveDays();
+    recomputeAll();
+    updatePlannedSeriesFromEdits();
+    updateTopStats();
+}
+
 const refreshChartsBtn = document.getElementById('refreshChartsBtn');
 if(refreshChartsBtn) refreshChartsBtn.addEventListener('click', function(){
     try {
-        refreshRunsFromEffectiveDays();
-        recomputeAll();
-        updatePlannedSeriesFromEdits();
-        updateTopStats();
+        fullDashboardRefresh();
         refreshChartsBtn.textContent = '✅ Charts Refreshed!';
         setTimeout(() => { refreshChartsBtn.textContent = '🔄 Refresh Charts'; }, 2000);
     } catch(e) {
         console.error('Refresh charts error:', e);
         refreshChartsBtn.textContent = '❌ Error';
         setTimeout(() => { refreshChartsBtn.textContent = '🔄 Refresh Charts'; }, 2000);
+    }
+});
+
+const refreshDashboardBtn = document.getElementById('refreshDashboardBtn');
+if(refreshDashboardBtn) refreshDashboardBtn.addEventListener('click', function(){
+    try {
+        fullDashboardRefresh();
+        if(typeof renderPlanTable === 'function') renderPlanTable();
+        refreshDashboardBtn.textContent = 'Refreshed!';
+        setTimeout(() => { refreshDashboardBtn.textContent = 'Refresh Dashboard'; }, 2000);
+    } catch(e) {
+        console.error('Refresh dashboard error:', e);
+        refreshDashboardBtn.textContent = 'Error';
+        setTimeout(() => { refreshDashboardBtn.textContent = 'Refresh Dashboard'; }, 2000);
     }
 });
 
