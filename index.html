@@ -1131,7 +1131,10 @@ body.usa-theme [style*="color: #888"] {
 
     if(isUSA){
         document.body.classList.add('usa-theme');
-        usaBtn.textContent = '\uD83C\uDDFA\uD83C\uDDF8 USA: On';
+        usaBtn.textContent = '\uD83C\uDDFA\uD83C\uDDF8 USA';
+        usaBtn.style.background = '#3c3b6e';
+        usaBtn.style.color = '#fff';
+        usaBtn.style.borderColor = '#b22234';
     } else {
         usaBtn.textContent = '\uD83C\uDDFA\uD83C\uDDF8 USA';
     }
@@ -4048,14 +4051,34 @@ try{ initOverridesExportImport(); }catch(e){}
         }
     };
 
+    // Original default dataset colors (captured from the chart definitions)
+    var defaultColors = {easy:'#4299e1',tempo:'#f6ad55',long:'#fc8181',recovery:'#9b7edb',interval:'#2f855a',race:'#1a202c'};
+    // USA-themed run type colors: reds, blues, and white-based
+    var usaColors = {easy:'#3c3b6e',tempo:'#b22234',long:'#d63a4a',recovery:'#002868',interval:'#7b1e34',race:'#1a1a40'};
+
+    // Save original main chart dataset colors on first call
+    var origMainDS = null;
+    var origPaceDS = null;
+
     function getActiveTheme(){
         if(document.body.classList.contains('dark-mode')) return 'dark';
         if(document.body.classList.contains('usa-theme')) return 'usa';
         return 'light';
     }
 
+    function hexToRgbaTheme(hex, alpha){
+        var h = hex.replace('#','');
+        var bigint = parseInt(h.length===3 ? h.split('').map(function(c){return c+c;}).join('') : h, 16);
+        var r = (bigint >> 16) & 255;
+        var g = (bigint >> 8) & 255;
+        var b = bigint & 255;
+        return 'rgba('+r+', '+g+', '+b+', '+alpha+')';
+    }
+
     function applyChartTheme(themeName){
         var t = themes[themeName] || themes.light;
+        var isUSA = (themeName === 'usa');
+        var activeColors = isUSA ? usaColors : defaultColors;
         var allCharts = [
             typeof mainChart !== 'undefined' ? mainChart : null,
             typeof paceChart !== 'undefined' ? paceChart : null,
@@ -4063,6 +4086,7 @@ try{ initOverridesExportImport(); }catch(e){}
             typeof pieChart !== 'undefined' ? pieChart : null
         ].filter(Boolean);
 
+        // --- Scale / legend theming (all charts) ---
         allCharts.forEach(function(chart){
             var opts = chart.options;
             if(opts.scales){
@@ -4078,20 +4102,104 @@ try{ initOverridesExportImport(); }catch(e){}
                 if(!opts.plugins.legend.labels) opts.plugins.legend.labels = {};
                 opts.plugins.legend.labels.color = t.legend;
             }
-            chart.update();
         });
 
-        if(typeof mainChart !== 'undefined' && mainChart.data.datasets[1]){
-            mainChart.data.datasets[1].pointBorderColor = t.pointBorder;
+        // --- Main chart dataset colors ---
+        if(typeof mainChart !== 'undefined'){
+            var ds = mainChart.data.datasets;
+            // Save originals once
+            if(!origMainDS && ds.length >= 2){
+                origMainDS = {
+                    planned: { borderColor: ds[0].borderColor, pointBackgroundColor: ds[0].pointBackgroundColor, backgroundColor: ds[0].backgroundColor },
+                    actual:  { borderColor: ds[1].borderColor, pointBackgroundColor: ds[1].pointBackgroundColor, backgroundColor: ds[1].backgroundColor, pointBorderColor: ds[1].pointBorderColor }
+                };
+            }
+            // Planned mileage line (dataset 0)
+            if(ds[0]){
+                if(isUSA){
+                    ds[0].borderColor = 'rgba(60,59,110,0.6)';
+                    ds[0].pointBackgroundColor = 'rgba(60,59,110,0.85)';
+                    ds[0].backgroundColor = 'rgba(60,59,110,0.12)';
+                } else if(origMainDS){
+                    ds[0].borderColor = origMainDS.planned.borderColor;
+                    ds[0].pointBackgroundColor = origMainDS.planned.pointBackgroundColor;
+                    ds[0].backgroundColor = origMainDS.planned.backgroundColor;
+                }
+            }
+            // Actual mileage line (dataset 1)
+            if(ds[1]){
+                if(isUSA){
+                    ds[1].borderColor = '#b22234';
+                    ds[1].pointBackgroundColor = '#b22234';
+                    ds[1].backgroundColor = 'rgba(178,34,52,0.1)';
+                    ds[1].pointBorderColor = t.pointBorder;
+                } else if(origMainDS){
+                    ds[1].borderColor = origMainDS.actual.borderColor;
+                    ds[1].pointBackgroundColor = origMainDS.actual.pointBackgroundColor;
+                    ds[1].backgroundColor = origMainDS.actual.backgroundColor;
+                    ds[1].pointBorderColor = t.pointBorder;
+                }
+            }
+            // Run scatter datasets (index 2+)
+            var typeKeys = Object.keys(defaultColors);
+            typeKeys.forEach(function(type, i){
+                var dsIdx = 2 + i;
+                if(ds[dsIdx]){
+                    var c = activeColors[type];
+                    ds[dsIdx].backgroundColor = hexToRgbaTheme(c, 0.65);
+                    ds[dsIdx].borderColor = hexToRgbaTheme(c, 0.95);
+                }
+            });
             mainChart.update();
         }
+
+        // --- Pie chart ---
         if(typeof pieChart !== 'undefined' && pieChart.data.datasets[0]){
             pieChart.data.datasets[0].borderColor = t.pieBorder;
+            // Recolor pie slices
+            var labels = pieChart.data.labels || [];
+            pieChart.data.datasets[0].backgroundColor = labels.map(function(label){
+                var key = label.toLowerCase();
+                return activeColors[key] || '#999';
+            });
             pieChart.update();
         }
+
+        // --- Pace chart ---
         if(typeof paceChart !== 'undefined' && paceChart.data.datasets[0]){
-            paceChart.data.datasets[0].pointBorderColor = t.pointBorder;
+            var pds = paceChart.data.datasets[0];
+            if(!origPaceDS){
+                origPaceDS = { borderColor: pds.borderColor, backgroundColor: pds.backgroundColor };
+            }
+            if(isUSA){
+                pds.borderColor = 'rgba(60,59,110,0.85)';
+                pds.backgroundColor = 'rgba(60,59,110,0.15)';
+            } else {
+                pds.borderColor = origPaceDS.borderColor;
+                pds.backgroundColor = origPaceDS.backgroundColor;
+            }
+            pds.pointBorderColor = t.pointBorder;
+            // The per-point coloring callback reads from `colors` — override that too
+            pds.pointBackgroundColor = function(ctx){
+                var r = window.__filteredRuns && window.__filteredRuns[ctx.dataIndex];
+                if(!r) return isUSA ? '#3c3b6e' : '#667eea';
+                return activeColors[r.type] || (isUSA ? '#3c3b6e' : '#667eea');
+            };
             paceChart.update();
+        }
+
+        // --- HR chart ---
+        if(typeof hrChart !== 'undefined'){
+            var typeKeys2 = Object.keys(defaultColors);
+            hrChart.data.datasets.forEach(function(ds){
+                var type = ds.label.toLowerCase();
+                var c = activeColors[type];
+                if(c){
+                    ds.backgroundColor = c;
+                    ds.borderColor = hexToRgbaTheme(c, 0.9);
+                }
+            });
+            hrChart.update();
         }
     }
 
@@ -4104,7 +4212,14 @@ try{ initOverridesExportImport(); }catch(e){}
         var isDark = document.body.classList.contains('dark-mode');
         var isUSA = document.body.classList.contains('usa-theme');
         darkBtn.textContent = isDark ? '\u2600\uFE0F Light' : '\uD83C\uDF19 Dark';
-        usaBtn.textContent = isUSA ? '\uD83C\uDDFA\uD83C\uDDF8 USA: On' : '\uD83C\uDDFA\uD83C\uDDF8 USA';
+        usaBtn.textContent = '\uD83C\uDDFA\uD83C\uDDF8 USA';
+        // Active state styling handled by CSS (.usa-theme #usaThemeToggle),
+        // but clear inline overrides when toggling off
+        if(!isUSA){
+            usaBtn.style.background = '';
+            usaBtn.style.color = '';
+            usaBtn.style.borderColor = '';
+        }
     }
 
     // --- Dark mode toggle ---
