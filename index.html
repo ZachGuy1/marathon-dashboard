@@ -802,23 +802,338 @@ body.dark-mode ::-webkit-scrollbar-thumb {
 body.dark-mode ::-webkit-scrollbar-thumb:hover {
     background: #555580;
 }
+
+/* ============================
+   USA Theme Toggle Button
+   ============================ */
+#usaThemeToggle {
+    position: fixed;
+    top: 20px;
+    right: 280px;
+    z-index: 1001;
+    padding: 8px 14px;
+    border-radius: 20px;
+    border: 1px solid #ddd;
+    background: white;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: background 0.3s, color 0.3s, border-color 0.3s;
+    min-height: 38px;
+}
+#usaThemeToggle:hover {
+    border-color: #b22234;
+}
+
+/* ============================
+   USA Theme Styles
+   ============================ */
+
+/* Color palette:
+   Red:    #b22234  (Old Glory Red)
+   Blue:   #3c3b6e  (Old Glory Blue)
+   White:  #ffffff
+   Accent: #002868  (deeper blue)
+   Light:  #f0f4ff  (faint blue tint)
+   Light red bg: #fdf0f0
+*/
+
+/* --- Body & page background --- */
+body.usa-theme {
+    background: linear-gradient(135deg, #3c3b6e 0%, #002868 100%);
+}
+
+/* --- Container --- */
+body.usa-theme .container {
+    background: #ffffff;
+    box-shadow: 0 20px 60px rgba(0,0,40,0.35);
+}
+
+/* --- Header: red-white-blue banner --- */
+body.usa-theme .header {
+    background: linear-gradient(135deg, #b22234 0%, #8b1a28 100%);
+    border-bottom: 4px solid #3c3b6e;
+}
+
+/* --- Stats grid --- */
+body.usa-theme .stats-grid {
+    background: #f0f4ff;
+}
+body.usa-theme .stat-card {
+    background: #ffffff;
+    border-left-color: #b22234;
+    box-shadow: 0 4px 6px rgba(60,59,110,0.12);
+}
+body.usa-theme .stat-card h3 {
+    color: #3c3b6e;
+}
+body.usa-theme .stat-card .value {
+    color: #b22234;
+}
+body.usa-theme .stat-card .subvalue {
+    color: #3c3b6e;
+}
+
+/* --- Chart sections --- */
+body.usa-theme .chart-title {
+    color: #3c3b6e;
+}
+
+/* --- Charts row & mini charts --- */
+body.usa-theme .charts-row {
+    background: #f0f4ff;
+}
+body.usa-theme .mini-chart {
+    background: #ffffff;
+    box-shadow: 0 4px 6px rgba(60,59,110,0.12);
+}
+
+/* --- Week cards --- */
+body.usa-theme .week-card {
+    background: #ffffff;
+    box-shadow: 0 2px 4px rgba(60,59,110,0.10);
+    border-left: 3px solid #3c3b6e;
+}
+body.usa-theme .week-header {
+    border-bottom-color: #dce3f0;
+}
+body.usa-theme .week-title {
+    color: #3c3b6e;
+}
+body.usa-theme .week-mileage {
+    color: #b22234;
+}
+
+/* --- Week card header (upcoming schedule) --- */
+body.usa-theme .week-card-header {
+    border-bottom-color: #dce3f0;
+}
+body.usa-theme .week-card-header .left {
+    color: #3c3b6e;
+}
+body.usa-theme .week-card-header .right {
+    color: #b22234;
+}
+
+/* --- Run items --- */
+body.usa-theme .run-item {
+    background: #fafcff;
+    border-left-color: #3c3b6e;
+}
+body.usa-theme .run-item.tempo { border-left-color: #b22234; }
+body.usa-theme .run-item.long { border-left-color: #b22234; }
+body.usa-theme .run-item.recovery { border-left-color: #3c3b6e; }
+body.usa-theme .run-date {
+    color: #002868;
+}
+body.usa-theme .run-stats {
+    color: #3c3b6e;
+}
+
+/* --- Pill buttons --- */
+body.usa-theme .pill-btn {
+    background: #ffffff;
+    border-color: #c0c8e0;
+    color: #3c3b6e;
+}
+body.usa-theme .pill-btn:hover {
+    border-color: #b22234;
+    color: #b22234;
+}
+
+/* --- Form inputs & selects --- */
+body.usa-theme input[type="date"],
+body.usa-theme input[type="number"],
+body.usa-theme input[type="text"],
+body.usa-theme select,
+body.usa-theme .input {
+    border-color: #c0c8e0 !important;
+}
+
+/* --- Primary buttons: use Old Glory Blue --- */
+body.usa-theme button[style*="background:#667eea"],
+body.usa-theme #refreshDashboardBtn {
+    background: #3c3b6e !important;
+}
+body.usa-theme .week-header div[style*="background:#667eea"] {
+    background: #3c3b6e !important;
+}
+
+/* --- As-of bar & tab bar --- */
+body.usa-theme #asOfBar {
+    background: #f8faff !important;
+    border-color: #c0c8e0 !important;
+}
+body.usa-theme #tabBar {
+    background: #f8faff !important;
+    border-color: #c0c8e0 !important;
+}
+
+/* --- Plan table --- */
+body.usa-theme #planTable thead th {
+    background: #e8edf8 !important;
+    color: #3c3b6e !important;
+}
+body.usa-theme #planTable tbody tr:nth-child(odd) {
+    background: #ffffff !important;
+}
+body.usa-theme #planTable tbody tr:nth-child(even) {
+    background: #f5f7fd !important;
+}
+body.usa-theme #planTable tbody tr:hover {
+    background: #e8edf8 !important;
+}
+body.usa-theme #planTable th,
+body.usa-theme #planTable td {
+    border-bottom-color: #dce3f0 !important;
+}
+body.usa-theme #planTable th:nth-child(2),
+body.usa-theme #planTable td:nth-child(2),
+body.usa-theme #planTable th:nth-child(4),
+body.usa-theme #planTable td:nth-child(4),
+body.usa-theme #planTable th:nth-child(8),
+body.usa-theme #planTable td:nth-child(8) {
+    border-right-color: #d0d8ec !important;
+}
+body.usa-theme #planTable td.weekCell,
+body.usa-theme #planTable td.weekCell strong {
+    color: #3c3b6e !important;
+}
+body.usa-theme #planTable td[id^="planWeekTotal_"] {
+    color: #b22234 !important;
+    background: rgba(178,34,52,0.04) !important;
+}
+body.usa-theme #planTable tbody tr.weekStart td {
+    border-top-color: #b0bcd8 !important;
+}
+
+/* --- Plan table controls --- */
+body.usa-theme .plan-table-controls {
+    background: #f0f4ff !important;
+    border-color: #c0c8e0 !important;
+}
+body.usa-theme .plan-table-controls label {
+    color: #3c3b6e !important;
+}
+body.usa-theme .plan-table-controls .smallBtn {
+    background: #ffffff !important;
+    border-color: #c0c8e0 !important;
+    color: #3c3b6e !important;
+}
+body.usa-theme #planTableWrap {
+    border-color: #c0c8e0 !important;
+}
+
+/* --- Workout items --- */
+body.usa-theme .workout-item {
+    background: #f0f4ff;
+    border-left-color: #3c3b6e;
+}
+body.usa-theme .workout-item.easy { border-left-color: #3c3b6e; background: #eef2ff; }
+body.usa-theme .workout-item.tempo { border-left-color: #b22234; background: #fdf0f0; }
+body.usa-theme .workout-item.long { border-left-color: #b22234; background: #fce8e8; }
+body.usa-theme .workout-item.off { border-left-color: #8090b0; background: #f4f6fa; }
+body.usa-theme .workout-item.recovery { border-left-color: #002868; background: #e8edf8; }
+body.usa-theme .workout-item.strength { border-left-color: #b22234; background: #fdf0f0; }
+body.usa-theme .workout-item.cross { border-left-color: #002868; background: #e8edf8; }
+body.usa-theme .workout-item .dow {
+    color: #3c3b6e;
+}
+body.usa-theme .workout-item .detail {
+    color: #002868;
+}
+body.usa-theme .workout-day {
+    color: #3c3b6e;
+}
+body.usa-theme .workout-detail {
+    color: #002868;
+}
+
+/* --- Headings --- */
+body.usa-theme h2 {
+    color: #3c3b6e;
+}
+body.usa-theme .chart-title {
+    color: #3c3b6e;
+}
+
+/* --- Override indicator --- */
+body.usa-theme .override-indicator {
+    background: #b22234;
+}
+
+/* --- planRowHighlight --- */
+body.usa-theme .planRowHighlight {
+    outline-color: rgba(178,34,52,0.45);
+}
+
+/* --- USA theme toggle itself (active state) --- */
+body.usa-theme #usaThemeToggle {
+    background: #3c3b6e;
+    border-color: #b22234;
+    color: #ffffff;
+    box-shadow: 0 2px 8px rgba(60,59,110,0.3);
+}
+
+/* --- Dark mode toggle when USA is active --- */
+body.usa-theme #darkModeToggle {
+    border-color: #c0c8e0;
+}
+
+/* --- Sync status in USA theme --- */
+body.usa-theme #syncStatus {
+    border-color: #c0c8e0 !important;
+}
+
+/* --- Inline color overrides for USA theme --- */
+body.usa-theme [style*="color:#333"],
+body.usa-theme [style*="color: #333"] {
+    color: #002868 !important;
+}
+body.usa-theme [style*="color:#666"],
+body.usa-theme [style*="color: #666"] {
+    color: #3c3b6e !important;
+}
+body.usa-theme [style*="color:#888"],
+body.usa-theme [style*="color: #888"] {
+    color: #5a5a8e !important;
+}
 </style>
 </head>
 <body>
 
-<!-- Dark Mode Toggle Button -->
+<!-- Theme Toggle Buttons -->
+<button id="usaThemeToggle" type="button" aria-label="Toggle USA theme"></button>
 <button id="darkModeToggle" type="button" aria-label="Toggle dark mode"></button>
 <script>
-// Apply saved dark mode preference immediately to avoid flash of light theme
+// Apply saved theme preference immediately to avoid flash
 (function(){
     var DARK_MODE_KEY = 'marathon_dark_mode';
+    var USA_THEME_KEY = 'marathon_usa_theme';
     var isDark = localStorage.getItem(DARK_MODE_KEY) === 'true';
-    var btn = document.getElementById('darkModeToggle');
+    var isUSA = localStorage.getItem(USA_THEME_KEY) === 'true';
+    var darkBtn = document.getElementById('darkModeToggle');
+    var usaBtn = document.getElementById('usaThemeToggle');
+
+    // Only one theme active at a time
+    if(isDark && isUSA){ isUSA = false; localStorage.setItem(USA_THEME_KEY, 'false'); }
+
     if(isDark){
         document.body.classList.add('dark-mode');
-        btn.textContent = '\u2600\uFE0F Light';
+        darkBtn.textContent = '\u2600\uFE0F Light';
     } else {
-        btn.textContent = '\uD83C\uDF19 Dark';
+        darkBtn.textContent = '\uD83C\uDF19 Dark';
+    }
+
+    if(isUSA){
+        document.body.classList.add('usa-theme');
+        usaBtn.textContent = '\uD83C\uDDFA\uD83C\uDDF8 USA: On';
+    } else {
+        usaBtn.textContent = '\uD83C\uDDFA\uD83C\uDDF8 USA';
     }
 })();
 </script>
@@ -3708,27 +4023,39 @@ try{ initPlanTableNavigation(); }catch(e){}
 try{ initOverridesExportImport(); }catch(e){}
 
 // ============================
-// Dark Mode Toggle
+// Theme Toggles (Dark Mode + USA Theme)
 // ============================
 (function(){
     var DARK_MODE_KEY = 'marathon_dark_mode';
-    var btn = document.getElementById('darkModeToggle');
-    if(!btn) return;
+    var USA_THEME_KEY = 'marathon_usa_theme';
+    var darkBtn = document.getElementById('darkModeToggle');
+    var usaBtn = document.getElementById('usaThemeToggle');
+    if(!darkBtn || !usaBtn) return;
 
-    var darkGridColor = 'rgba(255,255,255,0.1)';
-    var lightGridColor = '#f0f0f0';
-    var darkTickColor = '#c0c0d8';
-    var lightTickColor = '#666';
-    var darkTitleColor = '#c0c0d8';
-    var lightTitleColor = '#666';
-    var darkLegendColor = '#d0d0e0';
-    var lightLegendColor = '#666';
-    var darkPieBorder = '#2a2a3d';
-    var lightPieBorder = 'white';
-    var darkPointBorder = '#2a2a3d';
-    var lightPointBorder = 'white';
+    // --- Chart color palettes per theme ---
+    var themes = {
+        light: {
+            grid: '#f0f0f0', tick: '#666', title: '#666', legend: '#666',
+            pieBorder: 'white', pointBorder: 'white'
+        },
+        dark: {
+            grid: 'rgba(255,255,255,0.1)', tick: '#c0c0d8', title: '#c0c0d8', legend: '#d0d0e0',
+            pieBorder: '#2a2a3d', pointBorder: '#2a2a3d'
+        },
+        usa: {
+            grid: '#dce3f0', tick: '#3c3b6e', title: '#3c3b6e', legend: '#3c3b6e',
+            pieBorder: '#3c3b6e', pointBorder: 'white'
+        }
+    };
 
-    function applyChartTheme(isDark){
+    function getActiveTheme(){
+        if(document.body.classList.contains('dark-mode')) return 'dark';
+        if(document.body.classList.contains('usa-theme')) return 'usa';
+        return 'light';
+    }
+
+    function applyChartTheme(themeName){
+        var t = themes[themeName] || themes.light;
         var allCharts = [
             typeof mainChart !== 'undefined' ? mainChart : null,
             typeof paceChart !== 'undefined' ? paceChart : null,
@@ -3738,79 +4065,84 @@ try{ initOverridesExportImport(); }catch(e){}
 
         allCharts.forEach(function(chart){
             var opts = chart.options;
-
-            // Update grid & tick colors for all scales
             if(opts.scales){
                 Object.keys(opts.scales).forEach(function(scaleKey){
                     var scale = opts.scales[scaleKey];
-                    if(scale.grid) scale.grid.color = isDark ? darkGridColor : lightGridColor;
+                    if(scale.grid) scale.grid.color = t.grid;
                     if(!scale.ticks) scale.ticks = {};
-                    scale.ticks.color = isDark ? darkTickColor : lightTickColor;
-                    if(scale.title){
-                        scale.title.color = isDark ? darkTitleColor : lightTitleColor;
-                    }
+                    scale.ticks.color = t.tick;
+                    if(scale.title) scale.title.color = t.title;
                 });
             }
-
-            // Update legend text color
             if(opts.plugins && opts.plugins.legend){
                 if(!opts.plugins.legend.labels) opts.plugins.legend.labels = {};
-                opts.plugins.legend.labels.color = isDark ? darkLegendColor : lightLegendColor;
+                opts.plugins.legend.labels.color = t.legend;
             }
-
             chart.update();
         });
 
-        // Update specific dataset colors for dark mode
-        if(typeof mainChart !== 'undefined'){
-            // Actual mileage line point border
-            if(mainChart.data.datasets[1]){
-                mainChart.data.datasets[1].pointBorderColor = isDark ? darkPointBorder : lightPointBorder;
-            }
+        if(typeof mainChart !== 'undefined' && mainChart.data.datasets[1]){
+            mainChart.data.datasets[1].pointBorderColor = t.pointBorder;
             mainChart.update();
         }
-
-        if(typeof pieChart !== 'undefined'){
-            if(pieChart.data.datasets[0]){
-                pieChart.data.datasets[0].borderColor = isDark ? darkPieBorder : lightPieBorder;
-            }
+        if(typeof pieChart !== 'undefined' && pieChart.data.datasets[0]){
+            pieChart.data.datasets[0].borderColor = t.pieBorder;
             pieChart.update();
         }
-
-        if(typeof paceChart !== 'undefined'){
-            if(paceChart.data.datasets[0]){
-                paceChart.data.datasets[0].pointBorderColor = isDark ? darkPointBorder : lightPointBorder;
-            }
+        if(typeof paceChart !== 'undefined' && paceChart.data.datasets[0]){
+            paceChart.data.datasets[0].pointBorderColor = t.pointBorder;
             paceChart.update();
         }
     }
 
-    function setDarkMode(isDark, animate){
-        if(animate){
-            document.body.classList.add('dark-mode-transition');
-            setTimeout(function(){ document.body.classList.remove('dark-mode-transition'); }, 400);
-        }
-
-        if(isDark){
-            document.body.classList.add('dark-mode');
-            btn.textContent = '\u2600\uFE0F Light';
-        } else {
-            document.body.classList.remove('dark-mode');
-            btn.textContent = '\uD83C\uDF19 Dark';
-        }
-
-        localStorage.setItem(DARK_MODE_KEY, isDark ? 'true' : 'false');
-        applyChartTheme(isDark);
+    function animateTransition(){
+        document.body.classList.add('dark-mode-transition');
+        setTimeout(function(){ document.body.classList.remove('dark-mode-transition'); }, 400);
     }
 
-    btn.addEventListener('click', function(){
+    function updateButtons(){
+        var isDark = document.body.classList.contains('dark-mode');
+        var isUSA = document.body.classList.contains('usa-theme');
+        darkBtn.textContent = isDark ? '\u2600\uFE0F Light' : '\uD83C\uDF19 Dark';
+        usaBtn.textContent = isUSA ? '\uD83C\uDDFA\uD83C\uDDF8 USA: On' : '\uD83C\uDDFA\uD83C\uDDF8 USA';
+    }
+
+    // --- Dark mode toggle ---
+    darkBtn.addEventListener('click', function(){
+        animateTransition();
         var isDark = !document.body.classList.contains('dark-mode');
-        setDarkMode(isDark, true);
+        if(isDark){
+            // Turn off USA theme if active
+            document.body.classList.remove('usa-theme');
+            localStorage.setItem(USA_THEME_KEY, 'false');
+            document.body.classList.add('dark-mode');
+        } else {
+            document.body.classList.remove('dark-mode');
+        }
+        localStorage.setItem(DARK_MODE_KEY, isDark ? 'true' : 'false');
+        updateButtons();
+        applyChartTheme(getActiveTheme());
     });
 
-    // Apply chart theme on load (body class was set by the early init script)
-    var isDark = document.body.classList.contains('dark-mode');
-    applyChartTheme(isDark);
+    // --- USA theme toggle ---
+    usaBtn.addEventListener('click', function(){
+        animateTransition();
+        var isUSA = !document.body.classList.contains('usa-theme');
+        if(isUSA){
+            // Turn off dark mode if active
+            document.body.classList.remove('dark-mode');
+            localStorage.setItem(DARK_MODE_KEY, 'false');
+            document.body.classList.add('usa-theme');
+        } else {
+            document.body.classList.remove('usa-theme');
+        }
+        localStorage.setItem(USA_THEME_KEY, isUSA ? 'true' : 'false');
+        updateButtons();
+        applyChartTheme(getActiveTheme());
+    });
+
+    // Apply chart theme on load
+    applyChartTheme(getActiveTheme());
 })();
 
 </script>
