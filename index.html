@@ -1980,7 +1980,8 @@ function updateCountdown() {
         // Combined runs = defaults + user-entered
         let userRuns = loadSavedRuns();
         let runs = [...defaultRuns, ...userRuns].map((r, idx) => {
-            const d = new Date(r.isoDate);
+            const [isoY, isoM, isoD] = r.isoDate.split('-').map(Number);
+            const d = new Date(isoY, isoM - 1, isoD);
             const paceNum = parsePaceToNumber(r.pace);
             // Derive week number if not provided (Monday→Sunday weeks, anchored at planStart)
             const diffDays = Math.floor((d - planStart) / (1000*60*60*24));
@@ -3718,7 +3719,8 @@ const asOfDate = document.getElementById('asOfDate');
 
             runs = runs
                 .map((r, idx)=>{
-                    const d = new Date(r.isoDate);
+                    const [isoY, isoM, isoD] = r.isoDate.split('-').map(Number);
+                    const d = new Date(isoY, isoM - 1, isoD);
                     return {
                         ...r,
                         dateObj: d,
